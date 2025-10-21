@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,72 +7,50 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProductStore } from '@/stores/useProductStore';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 
-interface Product {
-  id: string;
-  name: string;
-  brand?: string;
-  category?: string;
-  created_at: string;
-  variants?: Array<{
-    id: string;
-    sku: string;
-    price?: number;
-    inventory?: Array<{
-      quantity: number;
-      location?: string;
-    }>;
-  }>;
-}
-
 export default function ProductsScreen() {
   const { user, session, signOut } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchProducts = async () => {
-    try {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${apiUrl}/products`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-      const data = await response.json();
-      setProducts(data.products || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const { products, loading, error, fetchProducts, clearError } = useProductStore();
 
   useEffect(() => {
     if (!user || !session) {
       return;
     }
-    fetchProducts();
+    fetchProducts(session.access_token);
   }, [user, session]);
 
-  const getTotalStock = (product: Product) => {
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Error', error);
+      clearError();
+    }
+  }, [error]);
+
+  const handleRefresh = () => {
+    if (session) {
+      fetchProducts(session.access_token);
+    }
+  };
+
+  const getTotalStock = (product: any) => {
     let total = 0;
-    product.variants?.forEach((variant) => {
-      variant.inventory?.forEach((inv) => {
+    product.variants?.forEach((variant: any) => {
+      variant.inventory?.forEach((inv: any) => {
         total += inv.quantity;
       });
     });
     return total;
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => router.push(`/product/${item.id}`)}>
       <Card style={styles.productCard}>
         <View style={styles.productHeader}>
@@ -114,10 +92,7 @@ export default function ProductsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => {
-            setRefreshing(true);
-            fetchProducts();
-          }} />
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
