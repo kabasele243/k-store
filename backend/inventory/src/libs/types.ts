@@ -40,8 +40,18 @@ export interface CreateProductRequest {
   name: string;
   description?: string;
   brand?: string;
-  category?: string; // Deprecated - use category_ids instead
-  category_ids?: string[]; // Array of category UUIDs
+  category?: string; // Deprecated - use category_id or category_ids instead
+  category_id?: string; // Single category UUID
+  category_ids?: string[]; // Array of category UUIDs (for multiple categories)
+  variants?: {
+    sku: string;
+    price: number;
+    attributes?: Record<string, any>;
+    inventory?: {
+      quantity: number;
+      location?: string;
+    }[];
+  }[];
   images?: {
     image_url: string; // S3 URL from presigned upload
     alt_text?: string;

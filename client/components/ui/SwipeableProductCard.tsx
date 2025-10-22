@@ -72,7 +72,11 @@ export function SwipeableProductCard({
           </View>
           <View style={styles.productMeta}>
             {product.brand && <Text style={styles.productBrand}>{product.brand}</Text>}
-            {product.category && <Text style={styles.productCategory}>• {product.category}</Text>}
+            {(product.category || product.product_categories?.[0]?.categories?.name) && (
+              <Text style={styles.productCategory}>
+                • {product.product_categories?.[0]?.categories?.name || product.category}
+              </Text>
+            )}
           </View>
           <View style={styles.productFooter}>
             <Text style={styles.variantCount}>

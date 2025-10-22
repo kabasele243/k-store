@@ -25,17 +25,16 @@ export const handler = async (
 
     const supabase = getSupabaseClient();
 
-    // Validate categories if provided
-    if (requestBody.category_ids && requestBody.category_ids.length > 0) {
-      const { data: categories, error: categoriesError } = await supabase
+    // Validate category if provided
+    if (requestBody.category_id) {
+      const { data: category, error: categoryError } = await supabase
         .from('categories')
         .select('id')
-        .in('id', requestBody.category_ids);
+        .eq('id', requestBody.category_id)
+        .single();
 
-      if (categoriesError) throw categoriesError;
-
-      if (!categories || categories.length !== requestBody.category_ids.length) {
-        throw new ApiError(400, 'One or more category IDs are invalid');
+      if (categoryError || !category) {
+        throw new ApiError(400, 'Invalid category ID');
       }
     }
 
@@ -55,21 +54,61 @@ export const handler = async (
       throw error;
     }
 
-    // Create product-category associations if category_ids provided
-    if (requestBody.category_ids && requestBody.category_ids.length > 0) {
-      const productCategories = requestBody.category_ids.map((categoryId) => ({
-        product_id: product.id,
-        category_id: categoryId,
-      }));
-
+    // Create product-category association if category_id provided
+    if (requestBody.category_id) {
       const { error: junctionError } = await supabase
         .from('product_categories')
-        .insert(productCategories);
+        .insert({
+          product_id: product.id,
+          category_id: requestBody.category_id,
+        });
 
       if (junctionError) {
         // Rollback: delete the product if category association fails
         await supabase.from('products').delete().eq('id', product.id);
         throw junctionError;
+      }
+    }
+
+    // Create variants if provided
+    if (requestBody.variants && requestBody.variants.length > 0) {
+      for (const variantData of requestBody.variants) {
+        // Create the variant
+        const { data: variant, error: variantError } = await supabase
+          .from('variants')
+          .insert({
+            product_id: product.id,
+            sku: variantData.sku,
+            price: variantData.price,
+            attributes: variantData.attributes,
+          })
+          .select()
+          .single();
+
+        if (variantError) {
+          // Rollback: delete the product if variant creation fails
+          await supabase.from('products').delete().eq('id', product.id);
+          throw variantError;
+        }
+
+        // Create inventory for this variant if provided
+        if (variantData.inventory && variantData.inventory.length > 0) {
+          const inventoryItems = variantData.inventory.map((inv) => ({
+            variant_id: variant.id,
+            quantity: inv.quantity,
+            location: inv.location || 'Default Location',
+          }));
+
+          const { error: inventoryError } = await supabase
+            .from('inventory_items')
+            .insert(inventoryItems);
+
+          if (inventoryError) {
+            // Rollback: delete the product if inventory creation fails
+            await supabase.from('products').delete().eq('id', product.id);
+            throw inventoryError;
+          }
+        }
       }
     }
 
@@ -94,7 +133,26 @@ export const handler = async (
       }
     }
 
-    return createSuccessResponse({ product }, 201);
+    // Fetch the complete product with variants, inventory, and categories
+    const { data: completeProduct, error: fetchError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        variants (
+          *,
+          inventory_items (*)
+        ),
+        product_categories (
+          category_id,
+          categories (*)
+        )
+      `)
+      .eq('id', product.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    return createSuccessResponse({ product: completeProduct }, 201);
   } catch (error) {
     return handleError(error);
   }

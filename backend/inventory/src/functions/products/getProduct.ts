@@ -18,7 +18,7 @@ export const handler = async (
 
     const supabase = getSupabaseClient();
 
-    // Fetch product with variants and inventory
+    // Fetch product with variants, inventory, and categories
     const { data: product, error } = await supabase
       .from('products')
       .select(`
@@ -26,6 +26,10 @@ export const handler = async (
         variants:variants(
           *,
           inventory:inventory_items(*)
+        ),
+        product_categories(
+          category_id,
+          categories(*)
         )
       `)
       .eq('id', productId)

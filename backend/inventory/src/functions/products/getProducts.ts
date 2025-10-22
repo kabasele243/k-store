@@ -8,7 +8,7 @@ export const handler = async (
   try {
     const supabase = getSupabaseClient();
 
-    // Fetch all products with their variants and inventory
+    // Fetch all products with their variants, inventory, and categories
     const { data: products, error } = await supabase
       .from('products')
       .select(`
@@ -16,6 +16,10 @@ export const handler = async (
         variants:variants(
           *,
           inventory:inventory_items(*)
+        ),
+        product_categories(
+          category_id,
+          categories(*)
         )
       `)
       .order('created_at', { ascending: false });

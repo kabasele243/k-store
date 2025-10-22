@@ -90,10 +90,12 @@ export default function ProductDetailScreen() {
               <Text style={styles.infoValue}>{product.brand}</Text>
             </View>
           )}
-          {product.category && (
+          {(product.category || product.product_categories?.[0]?.categories?.name) && (
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Category</Text>
-              <Text style={styles.infoValue}>{product.category}</Text>
+              <Text style={styles.infoValue}>
+                {product.product_categories?.[0]?.categories?.name || product.category}
+              </Text>
             </View>
           )}
           <View style={styles.infoRow}>

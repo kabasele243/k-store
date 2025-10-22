@@ -87,11 +87,14 @@ export default function ProductsScreen() {
     if (!searchQuery.trim()) return products;
 
     const query = searchQuery.toLowerCase();
-    return products.filter(product =>
-      product.name.toLowerCase().includes(query) ||
-      product.brand?.toLowerCase().includes(query) ||
-      product.category?.toLowerCase().includes(query)
-    );
+    return products.filter(product => {
+      const categoryName = product.product_categories?.[0]?.categories?.name || product.category || '';
+      return (
+        product.name.toLowerCase().includes(query) ||
+        product.brand?.toLowerCase().includes(query) ||
+        categoryName.toLowerCase().includes(query)
+      );
+    });
   }, [products, searchQuery]);
 
   const handleDeleteProduct = async (id: string) => {
