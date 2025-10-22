@@ -48,7 +48,7 @@ interface InventoryStore {
   clearError: () => void;
 }
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const useInventoryStore = create<InventoryStore>((set, get) => ({
   lowStockItems: [],

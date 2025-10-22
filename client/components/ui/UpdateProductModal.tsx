@@ -136,7 +136,7 @@ export default function UpdateProductModal({
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
       // Build update payload
       const updatePayload: any = {};

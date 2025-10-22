@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductStore } from '@/stores/useProductStore';
-import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton';
 import { SwipeableProductCard } from '@/components/ui/SwipeableProductCard';

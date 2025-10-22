@@ -77,7 +77,7 @@ export default function AddProductScreen() {
 
     setCategoriesLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(`${API_URL}/categories`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -215,7 +215,7 @@ export default function AddProductScreen() {
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
       // Auto-generate SKUs for variants that don't have one
       const variantsWithSKU = variants.map(variant => ({

@@ -35,7 +35,7 @@ export default function ProductDetailScreen() {
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(`${API_URL}/products/${id}`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
