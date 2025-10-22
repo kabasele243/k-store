@@ -184,3 +184,13 @@ functions:
           method: post
           authorizer:
             name: jwtAuthorizer
+
+  # Business Type Management
+  createBusinessType:
+    handler: src/functions/business-types/createBusinessType.handler
+    events:
+      - httpApi:
+          path: /business-types
+          method: post
+          authorizer:
+            name: jwtAuthorizer
