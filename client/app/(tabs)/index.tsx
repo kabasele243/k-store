@@ -14,15 +14,14 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProductStore } from '@/stores/useProductStore';
+import { useCategoryStore } from '@/stores/useCategoryStore';
 import Button from '@/components/ui/Button';
-import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton';
-import { SwipeableProductCard } from '@/components/ui/SwipeableProductCard';
+import { CategoryCard } from '@/components/ui/CategoryCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
-export default function ProductsScreen() {
+export default function CategoriesScreen() {
   const { user, session, signOut } = useAuth();
-  const { products, loading, error, fetchProducts, clearError, deleteProduct } = useProductStore();
+  const { categories, loading, error, fetchCategories, clearError } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const insets = useSafeAreaInsets();
@@ -31,7 +30,7 @@ export default function ProductsScreen() {
     if (!user || !session) {
       return;
     }
-    fetchProducts(session.access_token).then(() => {
+    fetchCategories(session.access_token).then(() => {
       setLastRefreshed(new Date());
     });
   }, [user, session]);
@@ -45,7 +44,7 @@ export default function ProductsScreen() {
 
   const handleRefresh = () => {
     if (session) {
-      fetchProducts(session.access_token).then(() => {
+      fetchCategories(session.access_token).then(() => {
         setLastRefreshed(new Date());
       });
     }
@@ -62,59 +61,28 @@ export default function ProductsScreen() {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const getTotalStock = (product: any) => {
-    let total = 0;
-    product.variants?.forEach((variant: any) => {
-      variant.inventory?.forEach((inv: any) => {
-        total += inv.quantity;
-      });
-    });
-    return total;
-  };
-
-  const getStockStatus = (total: number) => {
-    if (total === 0) {
-      return { color: Colors.status.danger, label: 'Out of Stock', icon: '⚠️' };
-    }
-    if (total < 10) {
-      return { color: Colors.status.warning, label: 'Low Stock', icon: '⚡' };
-    }
-    return { color: Colors.status.success, label: 'In Stock', icon: '✓' };
-  };
-
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories;
 
     const query = searchQuery.toLowerCase();
-    return products.filter(product => {
-      const categoryName = product.product_categories?.[0]?.categories?.name || product.category || '';
-      return (
-        product.name.toLowerCase().includes(query) ||
-        product.brand?.toLowerCase().includes(query) ||
-        categoryName.toLowerCase().includes(query)
-      );
-    });
-  }, [products, searchQuery]);
+    return categories.filter(category =>
+      category.name.toLowerCase().includes(query) ||
+      category.description?.toLowerCase().includes(query)
+    );
+  }, [categories, searchQuery]);
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!session) return;
-    try {
-      await deleteProduct(session.access_token, id);
-    } catch (error: any) {
-      Alert.alert('Delete Failed', error.message);
-    }
+  const handleCategoryPress = (categoryId: string, categoryName: string) => {
+    router.push({
+      pathname: '/category/[id]',
+      params: { id: categoryId, name: categoryName }
+    });
   };
 
-  const renderProduct = ({ item }: { item: any }) => {
-    const totalStock = getTotalStock(item);
-    const stockStatus = getStockStatus(totalStock);
-
+  const renderCategory = ({ item }: { item: any }) => {
     return (
-      <SwipeableProductCard
-        product={item}
-        totalStock={totalStock}
-        stockStatus={stockStatus}
-        onDelete={handleDeleteProduct}
+      <CategoryCard
+        category={item}
+        onPress={() => handleCategoryPress(item.id, item.name)}
       />
     );
   };
@@ -123,7 +91,7 @@ export default function ProductsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Products</Text>
+          <Text style={styles.title}>Categories</Text>
           <Button
             title="Sign Out"
             onPress={signOut}
@@ -133,20 +101,20 @@ export default function ProductsScreen() {
         </View>
         <TextInput
           style={styles.searchBar}
-          placeholder="Search products, brands, categories..."
+          placeholder="Search categories..."
           placeholderTextColor={Colors.text.secondary}
           editable={false}
         />
       </View>
       <View style={styles.listContent}>
         {[1, 2, 3, 4, 5].map((i) => (
-          <ProductCardSkeleton key={i} />
+          <View key={i} style={styles.skeletonCard} />
         ))}
       </View>
     </View>
   );
 
-  if (loading && products.length === 0) {
+  if (loading && categories.length === 0) {
     return renderSkeletonLoading();
   }
 
@@ -155,7 +123,7 @@ export default function ProductsScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.title}>Products</Text>
+            <Text style={styles.title}>Categories</Text>
             {lastRefreshed && (
               <Text style={styles.lastUpdated}>Updated {getTimeAgo(lastRefreshed)}</Text>
             )}
@@ -169,7 +137,7 @@ export default function ProductsScreen() {
         </View>
         <TextInput
           style={styles.searchBar}
-          placeholder="Search products, brands, categories..."
+          placeholder="Search categories..."
           placeholderTextColor={Colors.text.secondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -180,9 +148,11 @@ export default function ProductsScreen() {
       </View>
 
       <FlatList
-        data={filteredProducts}
-        renderItem={renderProduct}
+        data={filteredCategories}
+        renderItem={renderCategory}
         keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
@@ -190,19 +160,13 @@ export default function ProductsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {searchQuery ? 'No products found' : 'No products yet'}
+              {searchQuery ? 'No categories found' : 'No categories yet'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {searchQuery ? 'Try adjusting your search' : 'Add your first product to get started'}
+              {searchQuery ? 'Try adjusting your search' : 'Categories will appear here'}
             </Text>
           </View>
         }
-      />
-
-      <Button
-        title="Add Product"
-        onPress={() => router.push('/add-product')}
-        style={[styles.addButton, { bottom: Math.max(insets.bottom, Spacing.lg) }]}
       />
     </View>
   );
@@ -253,63 +217,21 @@ const styles = StyleSheet.create({
     fontSize: Typography.bodyPrimary.fontSize,
     color: Colors.text.primary,
   },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
   listContent: {
     padding: Spacing.screenPadding,
-    paddingBottom: 80,
+    paddingBottom: Spacing.xl,
   },
-  productCard: {
+  skeletonCard: {
+    height: 80,
+    backgroundColor: Colors.surface.primary,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
-    padding: Spacing.lg,
-  },
-  productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
-  },
-  productName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text.primary,
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  stockBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  stockBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.background.primary,
-  },
-  productMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  productBrand: {
-    ...Typography.bodySecondary,
-    fontWeight: '500',
-  },
-  productCategory: {
-    ...Typography.bodySecondary,
-  },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  variantCount: {
-    ...Typography.label,
-    color: Colors.text.secondary,
-  },
-  stockStatus: {
-    ...Typography.label,
-    fontWeight: '600',
-    fontSize: 13,
+    borderWidth: 1,
+    borderColor: Colors.border.primary,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -321,11 +243,5 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     ...Typography.bodySecondary,
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: Spacing.lg,
-    left: Spacing.screenPadding,
-    right: Spacing.screenPadding,
   },
 });

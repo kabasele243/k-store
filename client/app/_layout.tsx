@@ -19,12 +19,13 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === '(tabs)';
     const inProductRoute = segments[0] === 'product';
     const inAddProductRoute = segments[0] === 'add-product';
+    const inCategoryRoute = segments[0] === 'category';
 
     if (!user && inAuthGroup) {
       // Redirect to sign-in if not authenticated
       router.replace('/sign-in');
-    } else if (user && !inAuthGroup && !inProductRoute && !inAddProductRoute) {
-      // Redirect to app if authenticated (but allow product and add-product routes)
+    } else if (user && !inAuthGroup && !inProductRoute && !inAddProductRoute && !inCategoryRoute) {
+      // Redirect to app if authenticated (but allow product, add-product, and category routes)
       router.replace('/(tabs)');
     }
   }, [user, segments, loading]);
@@ -36,6 +37,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="product/[id]" options={{ headerShown: true }} />
       <Stack.Screen name="add-product/index" options={{ headerShown: true }} />
+      <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
