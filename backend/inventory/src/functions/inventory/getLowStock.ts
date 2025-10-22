@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { getSupabaseClient } from '../libs/supabaseClient';
-import { handleError, createSuccessResponse } from '../libs/errorHandler';
+import { getSupabaseClient } from '../../libs/supabaseClient';
+import { handleError, createSuccessResponse } from '../../libs/errorHandler';
 
 export const handler = async (
   event: APIGatewayProxyEventV2

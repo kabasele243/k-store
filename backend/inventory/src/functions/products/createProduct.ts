@@ -3,7 +3,6 @@ import { getSupabaseClient } from '../../libs/supabaseClient';
 import {
   handleError,
   createSuccessResponse,
-  createErrorResponse,
   ApiError,
 } from '../../libs/errorHandler';
 import { CreateProductRequest } from '../../libs/types';
