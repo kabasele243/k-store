@@ -194,3 +194,49 @@ functions:
           method: post
           authorizer:
             name: jwtAuthorizer
+
+  # Business Endpoints
+  getBusinesses:
+    handler: src/functions/businesses/getBusinesses.handler
+    events:
+      - httpApi:
+          path: /businesses
+          method: get
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  createBusiness:
+    handler: src/functions/businesses/createBusiness.handler
+    events:
+      - httpApi:
+          path: /businesses
+          method: post
+          authorizer:
+            name: jwtAuthorizer
+
+  getBusinessById:
+    handler: src/functions/businesses/getBusinessById.handler
+    events:
+      - httpApi:
+          path: /businesses/{id}
+          method: get
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  updateBusiness:
+    handler: src/functions/businesses/updateBusiness.handler
+    events:
+      - httpApi:
+          path: /businesses/{id}
+          method: put
+          authorizer:
+            name: jwtAuthorizer
+
+  deleteBusiness:
+    handler: src/functions/businesses/deleteBusiness.handler
+    events:
+      - httpApi:
+          path: /businesses/{id}
+          method: delete
+          authorizer:
+            name: jwtAuthorizer

@@ -10,11 +10,19 @@ interface BusinessType {
   description: string;
 }
 
+interface Business {
+  id: string;
+  name: string;
+  business_types?: BusinessType;
+}
+
 interface UserProfile {
   id: string;
   business_type_id: string | null;
+  business_id: string | null;
   is_admin: boolean;
   business_types: BusinessType | null;
+  businesses: Business | null;
 }
 
 interface User {
@@ -28,30 +36,34 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    business_type_id: '',
+    business_id: '',
     is_admin: false,
   });
 
   useEffect(() => {
     fetchUsers();
-    fetchBusinessTypes();
+    fetchBusinesses();
   }, []);
 
   async function fetchUsers() {
     try {
-      // Get all user profiles with business types
+      // Get all user profiles with businesses
       const { data: profiles, error } = await supabase
         .from('user_profiles')
         .select(`
           *,
-          business_types (
+          businesses (
             id,
             name,
-            description
+            business_types (
+              id,
+              name,
+              description
+            )
           )
         `);
 
@@ -65,22 +77,36 @@ export default function UsersPage() {
     }
   }
 
-  async function fetchBusinessTypes() {
+  async function fetchBusinesses() {
     try {
       const { data, error } = await supabase
-        .from('business_types')
-        .select('*')
+        .from('businesses')
+        .select(`
+          *,
+          business_types (
+            id,
+            name,
+            description
+          )
+        `)
         .order('name');
 
       if (error) throw error;
-      setBusinessTypes(data || []);
+      setBusinesses(data || []);
     } catch (error) {
-      console.error('Error fetching business types:', error);
+      console.error('Error fetching businesses:', error);
     }
   }
 
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate business requirement
+    if (!formData.is_admin && !formData.business_id) {
+      alert('Business is required for non-admin users');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -98,7 +124,7 @@ export default function UsersPage() {
         .from('user_profiles')
         .insert({
           id: authData.user.id,
-          business_type_id: formData.business_type_id || null,
+          business_id: formData.business_id || null,
           is_admin: formData.is_admin,
         });
 
@@ -110,7 +136,7 @@ export default function UsersPage() {
 
       alert('User created successfully');
       setShowCreateForm(false);
-      setFormData({ email: '', password: '', business_type_id: '', is_admin: false });
+      setFormData({ email: '', password: '', business_id: '', is_admin: false });
       fetchUsers();
     } catch (error: any) {
       alert(`Error creating user: ${error.message}`);
@@ -175,25 +201,7 @@ export default function UsersPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Type
-                </label>
-                <select
-                  value={formData.business_type_id}
-                  onChange={(e) => setFormData({ ...formData, business_type_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select a business type (optional)</option>
-                  {businessTypes.map((bt) => (
-                    <option key={bt.id} value={bt.id}>
-                      {bt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center">
+              <div className="flex items-center mb-4">
                 <input
                   type="checkbox"
                   id="is_admin"
@@ -205,6 +213,30 @@ export default function UsersPage() {
                   Admin User
                 </label>
               </div>
+
+              {!formData.is_admin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Business *
+                  </label>
+                  <select
+                    required={!formData.is_admin}
+                    value={formData.business_id}
+                    onChange={(e) => setFormData({ ...formData, business_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a business</option>
+                    {businesses.map((business) => (
+                      <option key={business.id} value={business.id}>
+                        {business.name} ({business.business_types?.name || 'Unknown'})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Required for non-admin users
+                  </p>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -225,6 +257,9 @@ export default function UsersPage() {
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Business
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Business Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -242,7 +277,10 @@ export default function UsersPage() {
                     {user.email || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {user.profile?.business_types?.name || 'None'}
+                    {user.profile?.businesses?.name || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {user.profile?.businesses?.business_types?.name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.profile?.is_admin ? (

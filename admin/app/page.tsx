@@ -16,6 +16,14 @@ export default function Home() {
           </Link>
 
           <Link
+            href="/businesses"
+            className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Businesses</h2>
+            <p className="text-gray-600">Manage businesses and their details</p>
+          </Link>
+
+          <Link
             href="/business-types"
             className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
           >

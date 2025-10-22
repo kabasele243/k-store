@@ -25,10 +25,14 @@ export const handler = async (
       .from('user_profiles')
       .select(`
         *,
-        business_types (
+        businesses (
           id,
           name,
-          description
+          business_types (
+            id,
+            name,
+            description
+          )
         )
       `);
 

@@ -17,12 +17,19 @@ export const handler = async (
       };
     }
 
-    const { email, password, business_type_id, is_admin = false } = JSON.parse(event.body);
+    const { email, password, business_id, is_admin = false } = JSON.parse(event.body);
 
     if (!email || !password) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Email and password are required' }),
+      };
+    }
+
+    if (!is_admin && !business_id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Business ID is required for non-admin users' }),
       };
     }
 
@@ -40,12 +47,29 @@ export const handler = async (
       };
     }
 
+    // Verify business exists if business_id is provided
+    if (business_id) {
+      const { data: business, error: businessError } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('id', business_id)
+        .single();
+
+      if (businessError || !business) {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ error: 'Business not found' }),
+        };
+      }
+    }
+
     // Create user profile
     const { data: profileData, error: profileError } = await supabase
       .from('user_profiles')
       .insert({
         id: authData.user.id,
-        business_type_id,
+        business_id,
         is_admin,
       })
       .select()

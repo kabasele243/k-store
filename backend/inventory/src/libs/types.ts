@@ -111,6 +111,26 @@ export interface BusinessType {
   updated_at: string;
 }
 
+export interface Business {
+  id: string;
+  name: string;
+  business_type_id: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessWithType extends Business {
+  business_types?: BusinessType;
+}
+
 export interface Category {
   id: string;
   business_type_id: string;
@@ -135,12 +155,38 @@ export interface ProductCategory {
 export interface UserProfile {
   id: string;
   business_type_id?: string;
+  business_id?: string;
   is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
 
 // API Request types for new entities
+export interface CreateBusinessRequest {
+  name: string;
+  business_type_id: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+}
+
+export interface UpdateBusinessRequest {
+  name?: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+}
+
 export interface CreateCategoryRequest {
   business_type_id: string;
   parent_category_id?: string;
