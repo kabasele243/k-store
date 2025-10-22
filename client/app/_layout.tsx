@@ -17,12 +17,13 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(tabs)';
+    const inProductRoute = segments[0] === 'product';
 
     if (!user && inAuthGroup) {
       // Redirect to sign-in if not authenticated
       router.replace('/sign-in');
-    } else if (user && !inAuthGroup) {
-      // Redirect to app if authenticated
+    } else if (user && !inAuthGroup && !inProductRoute) {
+      // Redirect to app if authenticated (but allow product routes)
       router.replace('/(tabs)');
     }
   }, [user, segments, loading]);
@@ -32,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       <Stack.Screen name="sign-up" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="product/[id]" options={{ headerShown: true }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
