@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "serverless offline",
+    "build": "tsc --build",
     "deploy": "serverless deploy",
     "deploy:prod": "serverless deploy --stage prod",
     "remove": "serverless remove",
-    "logs": "serverless logs -f"
+    "logs": "serverless logs -f",
+    "seed": "ts-node scripts/seed.ts"
   },
   "keywords": [
     "serverless",
@@ -31,10 +33,12 @@
     "@types/aws-lambda": "^8.10.130",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
+    "dotenv": "^17.2.3",
     "serverless": "^3.38.0",
     "serverless-esbuild": "^1.52.1",
     "serverless-offline": "^13.3.2",
     "serverless-plugin-typescript": "^2.1.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
 }

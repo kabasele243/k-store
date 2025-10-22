@@ -104,6 +104,7 @@ export default function CategoryProductsScreen() {
 
   return (
     <View style={styles.container}>
+
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.titleContainer}>
