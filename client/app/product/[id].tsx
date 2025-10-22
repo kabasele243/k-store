@@ -11,6 +11,8 @@ import {
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import UpdateProductModal from '@/components/ui/UpdateProductModal';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 
 type TabType = 'overview' | 'variants' | 'inventory';
@@ -21,6 +23,7 @@ export default function ProductDetailScreen() {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   useEffect(() => {
     if (!session || !id) return;
@@ -261,7 +264,23 @@ export default function ProductDetailScreen() {
           {activeTab === 'variants' && renderVariants()}
           {activeTab === 'inventory' && renderInventory()}
         </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            title="Update"
+            onPress={() => setShowUpdateModal(true)}
+            style={styles.updateButton}
+          />
+        </View>
       </View>
+
+      <UpdateProductModal
+        visible={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        productId={id}
+        variants={product.variants || []}
+        onSuccess={fetchProduct}
+      />
     </>
   );
 }
@@ -416,5 +435,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...Typography.bodySecondary,
+  },
+  footer: {
+    padding: Spacing.screenPadding,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.primary,
+    backgroundColor: Colors.background.primary,
+  },
+  updateButton: {
+    width: '100%',
   },
 });

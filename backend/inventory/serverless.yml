@@ -106,8 +106,17 @@ functions:
       - httpApi:
           path: /variants
           method: post
-          authorizer:
-            name: jwtAuthorizer
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  updateVariant:
+    handler: src/functions/variants/updateVariant.handler
+    events:
+      - httpApi:
+          path: /variants/{variantId}
+          method: put
+          # authorizer:
+          #   name: jwtAuthorizer
 
   # Inventory Endpoints
   addStock:
