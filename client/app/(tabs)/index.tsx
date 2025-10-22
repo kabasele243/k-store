@@ -20,7 +20,7 @@ import { CategoryCard } from '@/components/ui/CategoryCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function CategoriesScreen() {
-  const { user, session, signOut } = useAuth();
+  const { user, session } = useAuth();
   const { categories, loading, error, fetchCategories, clearError } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
@@ -90,15 +90,7 @@ export default function CategoriesScreen() {
   const renderSkeletonLoading = () => (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.title}>Categories</Text>
-          <Button
-            title="Sign Out"
-            onPress={signOut}
-            variant="outline"
-            style={styles.signOutButton}
-          />
-        </View>
+        <Text style={styles.title}>Categories</Text>
         <TextInput
           style={styles.searchBar}
           placeholder="Search categories..."
@@ -121,19 +113,11 @@ export default function CategoriesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.title}>Categories</Text>
-            {lastRefreshed && (
-              <Text style={styles.lastUpdated}>Updated {getTimeAgo(lastRefreshed)}</Text>
-            )}
-          </View>
-          <Button
-            title="Sign Out"
-            onPress={signOut}
-            variant="outline"
-            style={styles.signOutButton}
-          />
+        <View>
+          <Text style={styles.title}>Categories</Text>
+          {lastRefreshed && (
+            <Text style={styles.lastUpdated}>Updated {getTimeAgo(lastRefreshed)}</Text>
+          )}
         </View>
         <TextInput
           style={styles.searchBar}
@@ -190,11 +174,6 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border.primary,
     gap: Spacing.md,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   title: {
     ...Typography.displayHeading,
   },
@@ -202,10 +181,6 @@ const styles = StyleSheet.create({
     ...Typography.label,
     color: Colors.text.secondary,
     marginTop: 2,
-  },
-  signOutButton: {
-    paddingHorizontal: Spacing.md,
-    height: 36,
   },
   searchBar: {
     height: 48,
