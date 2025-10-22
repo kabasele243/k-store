@@ -1,12 +1,12 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { getSupabaseClient } from '../libs/supabaseClient';
+import { getSupabaseClient } from '../../libs/supabaseClient';
 import {
   handleError,
   createSuccessResponse,
   createErrorResponse,
   ApiError,
-} from '../libs/errorHandler';
-import { CreateProductRequest } from '../libs/types';
+} from '../../libs/errorHandler';
+import { CreateProductRequest } from '../../libs/types';
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -71,6 +71,27 @@ export const handler = async (
         // Rollback: delete the product if category association fails
         await supabase.from('products').delete().eq('id', product.id);
         throw junctionError;
+      }
+    }
+
+    // Create product images if provided (using presigned URLs)
+    if (requestBody.images && requestBody.images.length > 0) {
+      const productImages = requestBody.images.map((image, index) => ({
+        product_id: product.id,
+        image_url: image.image_url,
+        alt_text: image.alt_text,
+        display_order: index,
+        is_primary: image.is_primary ?? (index === 0),
+      }));
+
+      const { error: imagesError } = await supabase
+        .from('product_images')
+        .insert(productImages);
+
+      if (imagesError) {
+        // Rollback: delete the product if image creation fails
+        await supabase.from('products').delete().eq('id', product.id);
+        throw imagesError;
       }
     }
 

@@ -42,6 +42,11 @@ export interface CreateProductRequest {
   brand?: string;
   category?: string; // Deprecated - use category_ids instead
   category_ids?: string[]; // Array of category UUIDs
+  images?: {
+    image_url: string; // S3 URL from presigned upload
+    alt_text?: string;
+    is_primary?: boolean;
+  }[];
 }
 
 export interface UpdateProductRequest {
@@ -49,6 +54,11 @@ export interface UpdateProductRequest {
   description?: string;
   brand?: string;
   category?: string;
+  images?: {
+    image_url: string; // S3 URL from presigned upload
+    alt_text?: string;
+    is_primary?: boolean;
+  }[];
 }
 
 export interface AddStockRequest {
