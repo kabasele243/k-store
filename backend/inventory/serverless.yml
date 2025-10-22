@@ -136,3 +136,32 @@ functions:
           method: get
           authorizer:
             name: jwtAuthorizer
+
+  # Business Type Endpoints
+  getBusinessTypes:
+    handler: src/functions/getBusinessTypes.handler
+    events:
+      - httpApi:
+          path: /business-types
+          method: get
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  # Category Endpoints
+  getCategories:
+    handler: src/functions/getCategories.handler
+    events:
+      - httpApi:
+          path: /categories
+          method: get
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  createCategory:
+    handler: src/functions/createCategory.handler
+    events:
+      - httpApi:
+          path: /categories
+          method: post
+          authorizer:
+            name: jwtAuthorizer

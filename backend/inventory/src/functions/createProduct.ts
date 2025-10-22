@@ -26,6 +26,20 @@ export const handler = async (
 
     const supabase = getSupabaseClient();
 
+    // Validate categories if provided
+    if (requestBody.category_ids && requestBody.category_ids.length > 0) {
+      const { data: categories, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id')
+        .in('id', requestBody.category_ids);
+
+      if (categoriesError) throw categoriesError;
+
+      if (!categories || categories.length !== requestBody.category_ids.length) {
+        throw new ApiError(400, 'One or more category IDs are invalid');
+      }
+    }
+
     // Create the product
     const { data: product, error } = await supabase
       .from('products')
@@ -40,6 +54,24 @@ export const handler = async (
 
     if (error) {
       throw error;
+    }
+
+    // Create product-category associations if category_ids provided
+    if (requestBody.category_ids && requestBody.category_ids.length > 0) {
+      const productCategories = requestBody.category_ids.map((categoryId) => ({
+        product_id: product.id,
+        category_id: categoryId,
+      }));
+
+      const { error: junctionError } = await supabase
+        .from('product_categories')
+        .insert(productCategories);
+
+      if (junctionError) {
+        // Rollback: delete the product if category association fails
+        await supabase.from('products').delete().eq('id', product.id);
+        throw junctionError;
+      }
     }
 
     return createSuccessResponse({ product }, 201);

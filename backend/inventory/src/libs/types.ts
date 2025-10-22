@@ -40,7 +40,8 @@ export interface CreateProductRequest {
   name: string;
   description?: string;
   brand?: string;
-  category?: string;
+  category?: string; // Deprecated - use category_ids instead
+  category_ids?: string[]; // Array of category UUIDs
 }
 
 export interface UpdateProductRequest {
@@ -79,6 +80,58 @@ export interface JWTPayload {
   role?: string;
   iat?: number;
   exp?: number;
+}
+
+// Business Type and Category types
+export interface BusinessType {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  business_type_id: string;
+  parent_category_id?: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CategoryWithChildren extends Category {
+  children?: Category[];
+}
+
+export interface ProductCategory {
+  id: string;
+  product_id: string;
+  category_id: string;
+  created_at: string;
+}
+
+export interface UserProfile {
+  id: string;
+  business_type_id?: string;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// API Request types for new entities
+export interface CreateCategoryRequest {
+  business_type_id: string;
+  parent_category_id?: string;
+  name: string;
+  description?: string;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  description?: string;
+  parent_category_id?: string;
 }
 
 // Lambda Event types
