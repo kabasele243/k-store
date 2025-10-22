@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Package } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
 interface CategoryCardProps {
@@ -22,7 +23,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onPress })
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>📦</Text>
+        <Package size={32} color={Colors.accent.primary} />
       </View>
       <Text style={styles.name} numberOfLines={2}>
         {category.name}
@@ -59,9 +60,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
-  },
-  icon: {
-    fontSize: 32,
   },
   name: {
     ...Typography.sectionTitle,

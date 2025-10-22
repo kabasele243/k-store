@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
+import { AlertCircle, Zap, Check, Trash2 } from 'lucide-react-native';
 import Card from './Card';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 
@@ -11,7 +12,6 @@ interface SwipeableProductCardProps {
   stockStatus: {
     color: string;
     label: string;
-    icon: string;
   };
   onDelete?: (id: string) => void;
 }
@@ -40,6 +40,16 @@ export function SwipeableProductCard({
     );
   };
 
+  const getStockIcon = () => {
+    if (totalStock === 0) {
+      return <AlertCircle size={14} color={Colors.background.primary} />;
+    }
+    if (totalStock < 10) {
+      return <Zap size={14} color={Colors.background.primary} />;
+    }
+    return <Check size={14} color={Colors.background.primary} />;
+  };
+
   const renderRightActions = () => {
     return (
       <View style={styles.actionsContainer}>
@@ -47,6 +57,7 @@ export function SwipeableProductCard({
           onPress={handleDelete}
           style={styles.deleteAction}
         >
+          <Trash2 size={20} color={Colors.background.primary} />
           <Text style={styles.actionText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -65,9 +76,8 @@ export function SwipeableProductCard({
           <View style={styles.productHeader}>
             <Text style={styles.productName}>{product.name}</Text>
             <View style={[styles.stockBadge, { backgroundColor: stockStatus.color }]}>
-              <Text style={styles.stockBadgeText}>
-                {stockStatus.icon} {totalStock}
-              </Text>
+              {getStockIcon()}
+              <Text style={styles.stockBadgeText}>{totalStock}</Text>
             </View>
           </View>
           <View style={styles.productMeta}>
@@ -112,6 +122,9 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   stockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -158,10 +171,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
+    gap: 4,
   },
   actionText: {
     color: Colors.background.primary,
     fontWeight: '600',
-    fontSize: 14,
+    fontSize: 12,
   },
 });

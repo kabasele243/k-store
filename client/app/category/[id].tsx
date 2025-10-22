@@ -53,12 +53,12 @@ export default function CategoryProductsScreen() {
 
   const getStockStatus = (total: number) => {
     if (total === 0) {
-      return { color: Colors.status.danger, label: 'Out of Stock', icon: '⚠️' };
+      return { color: Colors.status.danger, label: 'Out of Stock' };
     }
     if (total < 10) {
-      return { color: Colors.status.warning, label: 'Low Stock', icon: '⚡' };
+      return { color: Colors.status.warning, label: 'Low Stock' };
     }
-    return { color: Colors.status.success, label: 'In Stock', icon: '✓' };
+    return { color: Colors.status.success, label: 'In Stock' };
   };
 
   // Filter products by category

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
+import { AlertCircle, Zap, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductStore } from '@/stores/useProductStore';
 import Card from '@/components/ui/Card';
@@ -95,7 +96,10 @@ export default function AnalyticsScreen() {
 
       {analytics.outOfStockProducts.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚠️ Out of Stock</Text>
+          <View style={styles.sectionTitleContainer}>
+            <AlertCircle size={20} color={Colors.status.danger} />
+            <Text style={styles.sectionTitle}>Out of Stock</Text>
+          </View>
           {analytics.outOfStockProducts.map((product, index) => (
             <TouchableOpacity
               key={product.id}
@@ -121,7 +125,10 @@ export default function AnalyticsScreen() {
 
       {analytics.lowStockProducts.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚡ Low Stock Alerts</Text>
+          <View style={styles.sectionTitleContainer}>
+            <Zap size={20} color={Colors.status.warning} />
+            <Text style={styles.sectionTitle}>Low Stock Alerts</Text>
+          </View>
           {analytics.lowStockProducts.map((product, index) => (
             <TouchableOpacity
               key={product.id}
@@ -147,7 +154,9 @@ export default function AnalyticsScreen() {
 
       {analytics.lowStockCount === 0 && analytics.outOfStockCount === 0 && (
         <Card style={styles.emptyCard}>
-          <Text style={styles.emptyIcon}>✓</Text>
+          <View style={styles.emptyIconContainer}>
+            <CheckCircle size={48} color={Colors.status.success} />
+          </View>
           <Text style={styles.emptyTitle}>All Good!</Text>
           <Text style={styles.emptyText}>
             No stock alerts at the moment. Your inventory is healthy.
@@ -211,11 +220,16 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: Spacing.lg,
   },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.text.primary,
-    marginBottom: Spacing.md,
   },
   alertCard: {
     marginBottom: Spacing.sm,
@@ -251,8 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.xl * 2,
   },
-  emptyIcon: {
-    fontSize: 48,
+  emptyIconContainer: {
     marginBottom: Spacing.md,
   },
   emptyTitle: {
