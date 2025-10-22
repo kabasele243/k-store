@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LogOut, User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/theme';
 
 export default function SettingsScreen() {
-  const router = useRouter();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -26,12 +24,24 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingItemLeft}>
-            <User size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingItemText}>Profile</Text>
+        <View style={styles.userInfo}>
+          <View style={styles.userAvatar}>
+            <User size={32} color={Colors.accent.primary} />
           </View>
-        </TouchableOpacity>
+          <View style={styles.userDetails}>
+            <Text style={styles.userName}>
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+            </Text>
+            <Text style={styles.userMeta}>
+              {user?.user_metadata?.business_name || 'No business assigned'}
+            </Text>
+            <Text style={styles.userRole}>
+              {user?.user_metadata?.role || 'Member'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
           <View style={styles.settingItemLeft}>
@@ -91,5 +101,46 @@ const styles = StyleSheet.create({
   signOutText: {
     color: Colors.accent.primary,
     fontWeight: '600',
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    gap: 15,
+  },
+  userAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.surface.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.accent.primary,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  userMeta: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 2,
+  },
+  userRole: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    textTransform: 'capitalize',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border.primary,
+    marginHorizontal: 10,
+    marginVertical: 5,
   },
 });

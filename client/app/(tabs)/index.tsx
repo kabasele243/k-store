@@ -89,16 +89,7 @@ export default function CategoriesScreen() {
 
   const renderSkeletonLoading = () => (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Categories</Text>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search categories..."
-          placeholderTextColor={Colors.text.secondary}
-          editable={false}
-        />
-      </View>
-      <View style={styles.listContent}>
+      <View style={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}>
         {[1, 2, 3, 4, 5].map((i) => (
           <View key={i} style={styles.skeletonCard} />
         ))}
@@ -112,32 +103,13 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Categories</Text>
-          {lastRefreshed && (
-            <Text style={styles.lastUpdated}>Updated {getTimeAgo(lastRefreshed)}</Text>
-          )}
-        </View>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search categories..."
-          placeholderTextColor={Colors.text.secondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          clearButtonMode="while-editing"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      </View>
-
       <FlatList
         data={filteredCategories}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
         }
@@ -166,31 +138,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background.primary,
-  },
-  header: {
-    padding: Spacing.screenPadding,
-    paddingTop: Spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.primary,
-    gap: Spacing.md,
-  },
-  title: {
-    ...Typography.displayHeading,
-  },
-  lastUpdated: {
-    ...Typography.label,
-    color: Colors.text.secondary,
-    marginTop: 2,
-  },
-  searchBar: {
-    height: 48,
-    backgroundColor: Colors.surface.primary,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border.primary,
-    fontSize: Typography.bodyPrimary.fontSize,
-    color: Colors.text.primary,
   },
   row: {
     justifyContent: 'space-between',
