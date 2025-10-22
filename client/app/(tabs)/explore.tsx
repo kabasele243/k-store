@@ -1,112 +1,268 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProductStore } from '@/stores/useProductStore';
+import Card from '@/components/ui/Card';
+import { Colors, Typography, Spacing } from '@/constants/theme';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+export default function AnalyticsScreen() {
+  const { user, session } = useAuth();
+  const { products, fetchProducts } = useProductStore();
 
-export default function TabTwoScreen() {
+  useEffect(() => {
+    if (!user || !session) {
+      return;
+    }
+    fetchProducts(session.access_token);
+  }, [user, session]);
+
+  const analytics = useMemo(() => {
+    const totalProducts = products.length;
+    let totalStock = 0;
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
+    const lowStockProducts: any[] = [];
+    const outOfStockProducts: any[] = [];
+
+    products.forEach(product => {
+      let productStock = 0;
+      product.variants?.forEach((variant: any) => {
+        variant.inventory?.forEach((inv: any) => {
+          productStock += inv.quantity;
+        });
+      });
+
+      totalStock += productStock;
+
+      if (productStock === 0) {
+        outOfStockCount++;
+        outOfStockProducts.push({ ...product, stock: productStock });
+      } else if (productStock < 10) {
+        lowStockCount++;
+        lowStockProducts.push({ ...product, stock: productStock });
+      }
+    });
+
+    return {
+      totalProducts,
+      totalStock,
+      lowStockCount,
+      outOfStockCount,
+      lowStockProducts: lowStockProducts.slice(0, 5),
+      outOfStockProducts: outOfStockProducts.slice(0, 5),
+    };
+  }, [products]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Analytics</Text>
+        <Text style={styles.subtitle}>Inventory insights at a glance</Text>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <Card style={styles.statCard}>
+          <Text style={styles.statValue}>{analytics.totalProducts}</Text>
+          <Text style={styles.statLabel}>Total Products</Text>
+        </Card>
+
+        <Card style={styles.statCard}>
+          <Text style={styles.statValue}>{analytics.totalStock}</Text>
+          <Text style={styles.statLabel}>Total Units</Text>
+        </Card>
+
+        <Card style={[styles.statCard, styles.warningCard]}>
+          <Text style={[styles.statValue, { color: Colors.status.warning }]}>
+            {analytics.lowStockCount}
+          </Text>
+          <Text style={styles.statLabel}>Low Stock</Text>
+        </Card>
+
+        <Card style={[styles.statCard, styles.dangerCard]}>
+          <Text style={[styles.statValue, { color: Colors.status.danger }]}>
+            {analytics.outOfStockCount}
+          </Text>
+          <Text style={styles.statLabel}>Out of Stock</Text>
+        </Card>
+      </View>
+
+      {analytics.outOfStockProducts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⚠️ Out of Stock</Text>
+          {analytics.outOfStockProducts.map((product, index) => (
+            <TouchableOpacity
+              key={product.id}
+              onPress={() => router.push(`/product/${product.id}`)}
+            >
+              <Card style={styles.alertCard}>
+                <View style={styles.alertContent}>
+                  <View style={styles.alertInfo}>
+                    <Text style={styles.alertProductName}>{product.name}</Text>
+                    {product.brand && (
+                      <Text style={styles.alertProductBrand}>{product.brand}</Text>
+                    )}
+                  </View>
+                  <View style={[styles.alertBadge, { backgroundColor: Colors.status.danger }]}>
+                    <Text style={styles.alertBadgeText}>0</Text>
+                  </View>
+                </View>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {analytics.lowStockProducts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⚡ Low Stock Alerts</Text>
+          {analytics.lowStockProducts.map((product, index) => (
+            <TouchableOpacity
+              key={product.id}
+              onPress={() => router.push(`/product/${product.id}`)}
+            >
+              <Card style={styles.alertCard}>
+                <View style={styles.alertContent}>
+                  <View style={styles.alertInfo}>
+                    <Text style={styles.alertProductName}>{product.name}</Text>
+                    {product.brand && (
+                      <Text style={styles.alertProductBrand}>{product.brand}</Text>
+                    )}
+                  </View>
+                  <View style={[styles.alertBadge, { backgroundColor: Colors.status.warning }]}>
+                    <Text style={styles.alertBadgeText}>{product.stock}</Text>
+                  </View>
+                </View>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {analytics.lowStockCount === 0 && analytics.outOfStockCount === 0 && (
+        <Card style={styles.emptyCard}>
+          <Text style={styles.emptyIcon}>✓</Text>
+          <Text style={styles.emptyTitle}>All Good!</Text>
+          <Text style={styles.emptyText}>
+            No stock alerts at the moment. Your inventory is healthy.
+          </Text>
+        </Card>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background.primary,
   },
-  titleContainer: {
+  content: {
+    padding: Spacing.screenPadding,
+    paddingTop: Spacing.xl,
+  },
+  header: {
+    marginBottom: Spacing.lg,
+  },
+  title: {
+    ...Typography.displayHeading,
+    marginBottom: Spacing.xs,
+  },
+  subtitle: {
+    ...Typography.bodySecondary,
+  },
+  statsGrid: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  warningCard: {
+    borderColor: Colors.status.warning,
+    borderWidth: 1.5,
+  },
+  dangerCard: {
+    borderColor: Colors.status.danger,
+    borderWidth: 1.5,
+  },
+  statValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  statLabel: {
+    ...Typography.label,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: Spacing.md,
+  },
+  alertCard: {
+    marginBottom: Spacing.sm,
+  },
+  alertContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  alertInfo: {
+    flex: 1,
+  },
+  alertProductName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 2,
+  },
+  alertProductBrand: {
+    ...Typography.bodySecondary,
+  },
+  alertBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  alertBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.background.primary,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl * 2,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: Spacing.md,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+    marginBottom: Spacing.sm,
+  },
+  emptyText: {
+    ...Typography.bodySecondary,
+    textAlign: 'center',
   },
 });

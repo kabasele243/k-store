@@ -39,6 +39,12 @@ export const Colors = {
   border: {
     primary: '#EAEAEA',
   },
+  status: {
+    success: '#66BB6A',
+    warning: '#FFA726',
+    danger: '#D82934',
+    info: '#3A7BD5',
+  },
 } as const;
 
 export const Typography = {
