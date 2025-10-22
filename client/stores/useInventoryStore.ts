@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiFetch } from '@/utils/api';
 
 interface InventoryItem {
   id: string;
@@ -48,8 +49,6 @@ interface InventoryStore {
   clearError: () => void;
 }
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export const useInventoryStore = create<InventoryStore>((set, get) => ({
   lowStockItems: [],
   loading: false,
@@ -58,20 +57,10 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   fetchLowStock: async (token: string, threshold = 10) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(
-        `${API_URL}/inventory/low-stock?threshold=${threshold}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const data = await apiFetch<{ items: InventoryItem[] }>(
+        `/inventory/low-stock?threshold=${threshold}`,
+        { token }
       );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch low stock items');
-      }
-
-      const data = await response.json();
       set({ lowStockItems: data.items || [], loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -87,12 +76,12 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   ) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/inventory/add-stock`, {
+      await apiFetch('/inventory/add-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        token,
         body: JSON.stringify({
           variant_id: variantId,
           quantity,
@@ -100,11 +89,6 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
           reason,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to add stock');
-      }
-
       set({ loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -121,12 +105,12 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
   ) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/inventory/remove-stock`, {
+      await apiFetch('/inventory/remove-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        token,
         body: JSON.stringify({
           variant_id: variantId,
           quantity,
@@ -134,12 +118,6 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
           reason,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to remove stock');
-      }
-
       set({ loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });

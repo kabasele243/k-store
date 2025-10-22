@@ -14,6 +14,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import UpdateProductModal from '@/components/ui/UpdateProductModal';
 import { Colors, Typography, Spacing } from '@/constants/theme';
+import { apiFetch } from '@/utils/api';
 
 type TabType = 'overview' | 'variants' | 'inventory';
 
@@ -35,18 +36,9 @@ export default function ProductDetailScreen() {
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
-      const response = await fetch(`${API_URL}/products/${id}`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+      const data = await apiFetch<{ product: any }>(`/products/${id}`, {
+        token: session.access_token,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch product');
-      }
-
-      const data = await response.json();
       setProduct(data.product);
     } catch (error: any) {
       Alert.alert('Error', error.message);

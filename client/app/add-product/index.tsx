@@ -16,6 +16,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Colors, Typography, Spacing } from '@/constants/theme';
+import { apiFetch } from '@/utils/api';
 
 type TabType = 'details' | 'variants' | 'inventory';
 
@@ -77,19 +78,9 @@ export default function AddProductScreen() {
 
     setCategoriesLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
-      const response = await fetch(`${API_URL}/categories`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+      const data = await apiFetch<Category[]>('/categories', {
+        token: session.access_token,
       });
-
-      if (!response.ok) {
-        console.log({ API_URL })
-        throw new Error('Failed to fetch categories');
-      }
-
-      const data = await response.json();
       setCategories(data);
     } catch (error: any) {
       console.error('Error fetching categories:', error);
@@ -215,8 +206,6 @@ export default function AddProductScreen() {
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
       // Auto-generate SKUs for variants that don't have one
       const variantsWithSKU = variants.map(variant => ({
         ...variant,
@@ -240,19 +229,14 @@ export default function AddProductScreen() {
         })),
       };
 
-      const response = await fetch(`${API_URL}/products`, {
+      await apiFetch('/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
         },
+        token: session.access_token,
         body: JSON.stringify(productData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create product');
-      }
 
       Alert.alert('Success', 'Product created successfully', [
         { text: 'OK', onPress: () => router.back() }

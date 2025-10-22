@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Input from './Input';
 import Button from './Button';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
+import { apiFetch } from '@/utils/api';
 
 interface Variant {
   id: string;
@@ -136,8 +137,6 @@ export default function UpdateProductModal({
 
     setLoading(true);
     try {
-      const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
       // Build update payload
       const updatePayload: any = {};
 
@@ -159,19 +158,14 @@ export default function UpdateProductModal({
 
       // Make single API call to update both price and quantity
       if (Object.keys(updatePayload).length > 0) {
-        const response = await fetch(`${API_URL}/variants/${selectedVariantId}`, {
+        await apiFetch(`/variants/${selectedVariantId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
           },
+          token: session.access_token,
           body: JSON.stringify(updatePayload),
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update variant');
-        }
       }
 
       Alert.alert('Success', 'Product updated successfully');

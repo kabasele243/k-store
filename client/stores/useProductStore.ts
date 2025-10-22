@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiFetch } from '@/utils/api';
 
 interface Variant {
   id: string;
@@ -32,8 +33,6 @@ interface ProductStore {
   clearError: () => void;
 }
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export const useProductStore = create<ProductStore>((set, get) => ({
   products: [],
   loading: false,
@@ -42,17 +41,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   fetchProducts: async (token: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/products`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<{ products: Product[] }>('/products', { token });
       set({ products: data.products || [], loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -62,20 +51,14 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   addProduct: async (token: string, product) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/products`, {
+      const data = await apiFetch<{ product: Product }>('/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        token,
         body: JSON.stringify(product),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create product');
-      }
-
-      const data = await response.json();
       set((state) => ({
         products: [...state.products, data.product],
         loading: false,
@@ -89,20 +72,14 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   updateProduct: async (token: string, id: string, updates) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/products/${id}`, {
+      const data = await apiFetch<{ product: Product }>(`/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        token,
         body: JSON.stringify(updates),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update product');
-      }
-
-      const data = await response.json();
       set((state) => ({
         products: state.products.map((p) =>
           p.id === id ? { ...p, ...data.product } : p
@@ -118,17 +95,10 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   deleteProduct: async (token: string, id: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/products/${id}`, {
+      await apiFetch(`/products/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        token,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete product');
-      }
-
       set((state) => ({
         products: state.products.filter((p) => p.id !== id),
         loading: false,
