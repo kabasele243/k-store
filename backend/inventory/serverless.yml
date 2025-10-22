@@ -64,7 +64,7 @@ functions:
 
   # Product Endpoints
   getProducts:
-    handler: src/functions/getProducts.handler
+    handler: src/functions/products/getProducts.handler
     events:
       - httpApi:
           path: /products
@@ -73,7 +73,7 @@ functions:
           #   name: jwtAuthorizer
 
   createProduct:
-    handler: src/functions/createProduct.handler
+    handler: src/functions/products/createProduct.handler
     events:
       - httpApi:
           path: /products
@@ -82,7 +82,7 @@ functions:
           #   name: jwtAuthorizer
 
   getProduct:
-    handler: src/functions/getProduct.handler
+    handler: src/functions/products/getProduct.handler
     events:
       - httpApi:
           path: /products/{productId}
@@ -91,7 +91,7 @@ functions:
           #   name: jwtAuthorizer
 
   updateProduct:
-    handler: src/functions/updateProduct.handler
+    handler: src/functions/products/updateProduct.handler
     events:
       - httpApi:
           path: /products/{productId}
@@ -101,7 +101,7 @@ functions:
 
   # Variant Endpoints
   createVariant:
-    handler: src/functions/createVariant.handler
+    handler: src/functions/variants/createVariant.handler
     events:
       - httpApi:
           path: /variants
@@ -111,7 +111,7 @@ functions:
 
   # Inventory Endpoints
   addStock:
-    handler: src/functions/addStock.handler
+    handler: src/functions/inventory/addStock.handler
     events:
       - httpApi:
           path: /inventory/add-stock
@@ -120,7 +120,7 @@ functions:
             name: jwtAuthorizer
 
   removeStock:
-    handler: src/functions/removeStock.handler
+    handler: src/functions/inventory/removeStock.handler
     events:
       - httpApi:
           path: /inventory/remove-stock
@@ -129,7 +129,7 @@ functions:
             name: jwtAuthorizer
 
   getLowStock:
-    handler: src/functions/getLowStock.handler
+    handler: src/functions/inventory/getLowStock.handler
     events:
       - httpApi:
           path: /inventory/low-stock
@@ -139,7 +139,7 @@ functions:
 
   # Business Type Endpoints
   getBusinessTypes:
-    handler: src/functions/getBusinessTypes.handler
+    handler: src/functions/business-types/getBusinessTypes.handler
     events:
       - httpApi:
           path: /business-types
@@ -149,7 +149,7 @@ functions:
 
   # Category Endpoints
   getCategories:
-    handler: src/functions/getCategories.handler
+    handler: src/functions/categories/getCategories.handler
     events:
       - httpApi:
           path: /categories
@@ -158,7 +158,7 @@ functions:
           #   name: jwtAuthorizer
 
   createCategory:
-    handler: src/functions/createCategory.handler
+    handler: src/functions/categories/createCategory.handler
     events:
       - httpApi:
           path: /categories
