@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { supabase } from '@/lib/supabase';
 
 interface BusinessType {
   id: string;
@@ -27,9 +26,13 @@ export default function BusinessTypesPage() {
 
   async function fetchBusinessTypes() {
     try {
-      const response = await fetch(`${API_URL}/business-types`);
-      const data = await response.json();
-      setBusinessTypes(data.business_types || []);
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setBusinessTypes(data || []);
     } catch (error) {
       console.error('Error fetching business types:', error);
     } finally {
@@ -42,18 +45,16 @@ export default function BusinessTypesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/business-types`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const { data, error } = await supabase
+        .from('business_types')
+        .insert({
+          name: formData.name,
+          description: formData.description || null,
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create business type');
-      }
+      if (error) throw error;
 
       alert('Business type created successfully');
       setShowCreateForm(false);

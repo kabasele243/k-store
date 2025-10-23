@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { supabase } from '@/lib/supabase';
 
 interface Category {
   id: string;
@@ -65,9 +64,23 @@ export default function ProductsPage() {
 
   async function fetchProducts() {
     try {
-      const response = await fetch(`${API_URL}/products`);
-      const data = await response.json();
-      setProducts(data.products || []);
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variants (
+            *,
+            inventory_items (*)
+          ),
+          product_categories (
+            category_id,
+            categories (*)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -77,9 +90,13 @@ export default function ProductsPage() {
 
   async function fetchCategories() {
     try {
-      const response = await fetch(`${API_URL}/categories`);
-      const data = await response.json();
-      setCategories(Array.isArray(data) ? data : []);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -90,33 +107,59 @@ export default function ProductsPage() {
     setLoading(true);
 
     try {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        brand: formData.brand,
-        category_id: formData.category_id || undefined,
-        variants: formData.variants.map((v) => ({
-          sku: v.sku,
-          price: parseFloat(v.price),
-          attributes: v.attributes,
-          inventory: v.inventory.map((i) => ({
-            quantity: parseInt(i.quantity),
-            location: i.location,
-          })),
-        })),
-      };
+      // Create product
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .insert({
+          name: formData.name,
+          description: formData.description || null,
+          brand: formData.brand || null,
+          category: formData.category_id || null,
+        })
+        .select()
+        .single();
 
-      const response = await fetch(`${API_URL}/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      if (productError) throw productError;
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create product');
+      // Create product-category association if category selected
+      if (formData.category_id) {
+        const { error: categoryError } = await supabase
+          .from('product_categories')
+          .insert({
+            product_id: product.id,
+            category_id: formData.category_id,
+          });
+
+        if (categoryError) throw categoryError;
+      }
+
+      // Create variants and inventory
+      for (const variant of formData.variants) {
+        const { data: newVariant, error: variantError } = await supabase
+          .from('variants')
+          .insert({
+            product_id: product.id,
+            sku: variant.sku,
+            price: parseFloat(variant.price),
+            attributes: variant.attributes,
+          })
+          .select()
+          .single();
+
+        if (variantError) throw variantError;
+
+        // Create inventory items for this variant
+        for (const inv of variant.inventory) {
+          const { error: inventoryError } = await supabase
+            .from('inventory_items')
+            .insert({
+              variant_id: newVariant.id,
+              quantity: parseInt(inv.quantity),
+              location: inv.location,
+            });
+
+          if (inventoryError) throw inventoryError;
+        }
       }
 
       alert('Product created successfully');

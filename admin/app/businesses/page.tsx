@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { supabase } from '@/lib/supabase';
 
 interface BusinessType {
   id: string;
@@ -18,10 +17,11 @@ interface Business {
   description?: string;
   email?: string;
   phone?: string;
-  address?: string;
+  address_line1?: string;
+  address_line2?: string;
   city?: string;
-  state?: string;
-  zip_code?: string;
+  state_province?: string;
+  postal_code?: string;
   country?: string;
   created_at: string;
   business_types?: BusinessType;
@@ -40,10 +40,11 @@ export default function BusinessesPage() {
     description: '',
     email: '',
     phone: '',
-    address: '',
+    address_line1: '',
+    address_line2: '',
     city: '',
-    state: '',
-    zip_code: '',
+    state_province: '',
+    postal_code: '',
     country: '',
   });
 
@@ -54,8 +55,19 @@ export default function BusinessesPage() {
 
   async function fetchBusinesses() {
     try {
-      const response = await fetch(`${API_URL}/businesses`);
-      const data = await response.json();
+      const { data, error } = await supabase
+        .from('businesses')
+        .select(`
+          *,
+          business_types (
+            id,
+            name,
+            description
+          )
+        `)
+        .order('name');
+
+      if (error) throw error;
       setBusinesses(data || []);
     } catch (error) {
       console.error('Error fetching businesses:', error);
@@ -66,8 +78,12 @@ export default function BusinessesPage() {
 
   async function fetchBusinessTypes() {
     try {
-      const response = await fetch(`${API_URL}/business-types`);
-      const data = await response.json();
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
       setBusinessTypes(data || []);
     } catch (error) {
       console.error('Error fetching business types:', error);
@@ -79,18 +95,25 @@ export default function BusinessesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/businesses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const { data, error } = await supabase
+        .from('businesses')
+        .insert({
+          name: formData.name,
+          business_type_id: formData.business_type_id,
+          description: formData.description || null,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          address_line1: formData.address_line1 || null,
+          address_line2: formData.address_line2 || null,
+          city: formData.city || null,
+          state_province: formData.state_province || null,
+          postal_code: formData.postal_code || null,
+          country: formData.country || null,
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create business');
-      }
+      if (error) throw error;
 
       alert('Business created successfully');
       setShowCreateForm(false);
@@ -109,28 +132,25 @@ export default function BusinessesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/businesses/${editingBusiness.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('businesses')
+        .update({
           name: formData.name,
-          description: formData.description,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zip_code,
-          country: formData.country,
-        }),
-      });
+          description: formData.description || null,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          address_line1: formData.address_line1 || null,
+          address_line2: formData.address_line2 || null,
+          city: formData.city || null,
+          state_province: formData.state_province || null,
+          postal_code: formData.postal_code || null,
+          country: formData.country || null,
+        })
+        .eq('id', editingBusiness.id)
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update business');
-      }
+      if (error) throw error;
 
       alert('Business updated successfully');
       setShowEditForm(false);
@@ -150,14 +170,12 @@ export default function BusinessesPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/businesses/${id}`, {
-        method: 'DELETE',
-      });
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', id);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete business');
-      }
+      if (error) throw error;
 
       alert('Business deleted successfully');
       fetchBusinesses();
@@ -173,10 +191,11 @@ export default function BusinessesPage() {
       description: '',
       email: '',
       phone: '',
-      address: '',
+      address_line1: '',
+      address_line2: '',
       city: '',
-      state: '',
-      zip_code: '',
+      state_province: '',
+      postal_code: '',
       country: '',
     });
   }
@@ -189,10 +208,11 @@ export default function BusinessesPage() {
       description: business.description || '',
       email: business.email || '',
       phone: business.phone || '',
-      address: business.address || '',
+      address_line1: business.address_line1 || '',
+      address_line2: business.address_line2 || '',
       city: business.city || '',
-      state: business.state || '',
-      zip_code: business.zip_code || '',
+      state_province: business.state_province || '',
+      postal_code: business.postal_code || '',
       country: business.country || '',
     });
     setShowEditForm(true);
@@ -307,14 +327,27 @@ export default function BusinessesPage() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    Address Line 1
                   </label>
                   <input
                     type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    value={formData.address_line1}
+                    onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="123 Main Street"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address Line 2
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address_line2}
+                    onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Apartment, suite, unit, etc. (optional)"
                   />
                 </div>
 
@@ -327,33 +360,33 @@ export default function BusinessesPage() {
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="New York"
+                    placeholder="London"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State
+                    State/Province/Region
                   </label>
                   <input
                     type="text"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    value={formData.state_province}
+                    onChange={(e) => setFormData({ ...formData, state_province: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="NY"
+                    placeholder="England"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zip Code
+                    Postal Code
                   </label>
                   <input
                     type="text"
-                    value={formData.zip_code}
-                    onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="10001"
+                    placeholder="SW1A 1AA"
                   />
                 </div>
 
@@ -361,13 +394,14 @@ export default function BusinessesPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="United States"
-                  />
+                  >
+                    <option value="">Select a country</option>
+                    <option value="Democratic Republic of Congo">Democratic Republic of Congo</option>
+                  </select>
                 </div>
               </div>
 
@@ -451,13 +485,26 @@ export default function BusinessesPage() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    Address Line 1
                   </label>
                   <input
                     type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    value={formData.address_line1}
+                    onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address Line 2
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address_line2}
+                    onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Apartment, suite, unit, etc. (optional)"
                   />
                 </div>
 
@@ -475,24 +522,24 @@ export default function BusinessesPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State
+                    State/Province/Region
                   </label>
                   <input
                     type="text"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    value={formData.state_province}
+                    onChange={(e) => setFormData({ ...formData, state_province: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zip Code
+                    Postal Code
                   </label>
                   <input
                     type="text"
-                    value={formData.zip_code}
-                    onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -501,12 +548,14 @@ export default function BusinessesPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">Select a country</option>
+                    <option value="Democratic Republic of Congo">Democratic Republic of Congo</option>
+                  </select>
                 </div>
               </div>
 
@@ -561,13 +610,17 @@ export default function BusinessesPage() {
                     <span className="font-medium">Phone:</span> {business.phone}
                   </p>
                 )}
-                {business.address && (
-                  <p className="flex items-center gap-2">
+                {(business.address_line1 || business.city) && (
+                  <p className="flex items-start gap-2">
                     <span className="font-medium">Address:</span>
-                    {business.address}
-                    {business.city && `, ${business.city}`}
-                    {business.state && `, ${business.state}`}
-                    {business.zip_code && ` ${business.zip_code}`}
+                    <span>
+                      {business.address_line1}
+                      {business.address_line2 && <><br />{business.address_line2}</>}
+                      {business.city && <><br />{business.city}</>}
+                      {business.state_province && `, ${business.state_province}`}
+                      {business.postal_code && ` ${business.postal_code}`}
+                      {business.country && <><br />{business.country}</>}
+                    </span>
                   </p>
                 )}
               </div>

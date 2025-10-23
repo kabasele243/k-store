@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { supabase } from '@/lib/supabase';
 
 interface BusinessType {
   id: string;
@@ -45,12 +44,16 @@ export default function CategoriesPage() {
 
   async function fetchBusinessTypes() {
     try {
-      const response = await fetch(`${API_URL}/business-types`);
-      const data = await response.json();
-      setBusinessTypes(data.business_types || []);
-      if (data.business_types?.length > 0) {
-        setSelectedBusinessType(data.business_types[0].id);
-        setFormData({ ...formData, business_type_id: data.business_types[0].id });
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setBusinessTypes(data || []);
+      if (data?.length > 0) {
+        setSelectedBusinessType(data[0].id);
+        setFormData({ ...formData, business_type_id: data[0].id });
       }
     } catch (error) {
       console.error('Error fetching business types:', error);
@@ -62,11 +65,37 @@ export default function CategoriesPage() {
   async function fetchCategories(businessTypeId: string) {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${API_URL}/categories?business_type_id=${businessTypeId}&hierarchy=true`
-      );
-      const data = await response.json();
-      setCategories(Array.isArray(data) ? data : []);
+
+      // Fetch all categories for the business type
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('business_type_id', businessTypeId)
+        .order('name');
+
+      if (error) throw error;
+
+      // Build hierarchy
+      const categoryMap = new Map<string, Category>();
+      const rootCategories: Category[] = [];
+
+      (data || []).forEach((cat: any) => {
+        categoryMap.set(cat.id, { ...cat, children: [] });
+      });
+
+      categoryMap.forEach((cat) => {
+        if (cat.parent_category_id) {
+          const parent = categoryMap.get(cat.parent_category_id);
+          if (parent) {
+            parent.children = parent.children || [];
+            parent.children.push(cat);
+          }
+        } else {
+          rootCategories.push(cat);
+        }
+      });
+
+      setCategories(rootCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -79,18 +108,18 @@ export default function CategoriesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({
+          business_type_id: formData.business_type_id,
+          parent_category_id: formData.parent_category_id || null,
+          name: formData.name,
+          description: formData.description || null,
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create category');
-      }
+      if (error) throw error;
 
       alert('Category created successfully');
       setShowCreateForm(false);
