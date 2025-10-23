@@ -12,10 +12,11 @@ interface CreateBusinessRequest {
   description?: string;
   email?: string;
   phone?: string;
-  address?: string;
+  address_line1?: string;
+  address_line2?: string;
   city?: string;
-  state?: string;
-  zip_code?: string;
+  state_province?: string;
+  postal_code?: string;
   country?: string;
 }
 
@@ -59,10 +60,11 @@ export const handler = async (
         description: requestBody.description,
         email: requestBody.email,
         phone: requestBody.phone,
-        address: requestBody.address,
+        address_line1: requestBody.address_line1,
+        address_line2: requestBody.address_line2,
         city: requestBody.city,
-        state: requestBody.state,
-        zip_code: requestBody.zip_code,
+        state_province: requestBody.state_province,
+        postal_code: requestBody.postal_code,
         country: requestBody.country,
       })
       .select()
