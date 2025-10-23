@@ -21,6 +21,7 @@ interface UserProfile {
   business_type_id: string | null;
   business_id: string | null;
   is_admin: boolean;
+  role: 'admin' | 'manager' | 'agent';
   business_types: BusinessType | null;
   businesses: Business | null;
 }
@@ -41,7 +42,7 @@ export default function UsersPage() {
     email: '',
     password: '',
     business_id: '',
-    is_admin: false,
+    role: 'agent' as 'admin' | 'manager' | 'agent',
   });
 
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function UsersPage() {
     e.preventDefault();
 
     // Validate business requirement
-    if (!formData.is_admin && !formData.business_id) {
+    if (formData.role !== 'admin' && !formData.business_id) {
       alert('Business is required for non-admin users');
       return;
     }
@@ -125,7 +126,8 @@ export default function UsersPage() {
         .insert({
           id: authData.user.id,
           business_id: formData.business_id || null,
-          is_admin: formData.is_admin,
+          role: formData.role,
+          is_admin: formData.role === 'admin',
         });
 
       if (profileError) {
@@ -136,7 +138,7 @@ export default function UsersPage() {
 
       alert('User created successfully');
       setShowCreateForm(false);
-      setFormData({ email: '', password: '', business_id: '', is_admin: false });
+      setFormData({ email: '', password: '', business_id: '', role: 'agent' });
       fetchUsers();
     } catch (error: any) {
       alert(`Error creating user: ${error.message}`);
@@ -201,26 +203,32 @@ export default function UsersPage() {
                 />
               </div>
 
-              <div className="flex items-center mb-4">
-                <input
-                  type="checkbox"
-                  id="is_admin"
-                  checked={formData.is_admin}
-                  onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_admin" className="ml-2 block text-sm text-gray-900">
-                  Admin User
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role
                 </label>
+                <select
+                  required
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'manager' | 'agent' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="agent">Agent (Read-only)</option>
+                  <option value="manager">Manager (Can update store)</option>
+                  <option value="admin">Admin (Full access)</option>
+                </select>
+                <p className="mt-1 text-sm text-gray-500">
+                  Admin: Full access | Manager: Update own store | Agent: Read-only
+                </p>
               </div>
 
-              {!formData.is_admin && (
+              {formData.role !== 'admin' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Business *
                   </label>
                   <select
-                    required={!formData.is_admin}
+                    required={formData.role !== 'admin'}
                     value={formData.business_id}
                     onChange={(e) => setFormData({ ...formData, business_id: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
@@ -233,7 +241,7 @@ export default function UsersPage() {
                     ))}
                   </select>
                   <p className="mt-1 text-sm text-gray-500">
-                    Required for non-admin users
+                    Required for managers and agents
                   </p>
                 </div>
               )}
@@ -263,7 +271,7 @@ export default function UsersPage() {
                   Business Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Admin
+                  Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
@@ -283,15 +291,15 @@ export default function UsersPage() {
                     {user.profile?.businesses?.business_types?.name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {user.profile?.is_admin ? (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Yes
-                      </span>
-                    ) : (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        No
-                      </span>
-                    )}
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.profile?.role === 'admin'
+                        ? 'bg-purple-100 text-purple-800'
+                        : user.profile?.role === 'manager'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {user.profile?.role ? user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1) : 'Agent'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {new Date(user.created_at).toLocaleDateString()}
