@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCategoryStore } from '@/stores/useCategoryStore';
-import Button from '@/components/ui/Button';
 import { CategoryCard } from '@/components/ui/CategoryCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
@@ -24,6 +23,7 @@ export default function CategoriesScreen() {
   const { categories, loading, error, fetchCategories, clearError } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -72,10 +72,14 @@ export default function CategoriesScreen() {
   }, [categories, searchQuery]);
 
   const handleCategoryPress = (categoryId: string, categoryName: string) => {
-    router.push({
-      pathname: '/category/[id]',
-      params: { id: categoryId, name: categoryName }
-    });
+    setActiveCategory(categoryId);
+    // Optional: Navigate after a short delay to show the active state
+    setTimeout(() => {
+      router.push({
+        pathname: '/category/[id]',
+        params: { id: categoryId, name: categoryName }
+      });
+    }, 200);
   };
 
   const renderCategory = ({ item }: { item: any }) => {
@@ -83,6 +87,7 @@ export default function CategoriesScreen() {
       <CategoryCard
         category={item}
         onPress={() => handleCategoryPress(item.id, item.name)}
+        isActive={activeCategory === item.id}
       />
     );
   };
@@ -107,11 +112,16 @@ export default function CategoriesScreen() {
         data={filteredCategories}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
         contentContainerStyle={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+        }
+        ListHeaderComponent={
+          activeCategory ? (
+            <View style={styles.activeIndicator}>
+              <Text style={styles.activeText}>Active Category: {activeCategory}</Text>
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -139,18 +149,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background.primary,
   },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
   listContent: {
     padding: Spacing.screenPadding,
     paddingBottom: Spacing.xl,
   },
-  skeletonCard: {
-    height: 80,
-    backgroundColor: Colors.surface.primary,
+  activeIndicator: {
+    backgroundColor: Colors.background.secondary,
+    padding: Spacing.md,
     borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 2,
+    borderColor: Colors.accent.primary,
+  },
+  activeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.accent.primary,
+    textAlign: 'center',
+  },
+  skeletonCard: {
+    height: 256,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border.primary,
