@@ -13,6 +13,7 @@ provider:
     SUPABASE_URL: ${ssm:/inventory/${self:provider.stage}/supabase-url}
     SUPABASE_SERVICE_ROLE_KEY: ${ssm:/inventory/${self:provider.stage}/supabase-service-role-key}
     SUPABASE_JWT_SECRET: ${ssm:/inventory/${self:provider.stage}/supabase-jwt-secret}
+    INVENTORY_ASSETS_BUCKET: !Ref InventoryAssetsBucket
   iam:
     role:
       statements:
@@ -22,6 +23,19 @@ provider:
             - ssm:GetParameters
           Resource:
             - arn:aws:ssm:${self:provider.region}:*:parameter/inventory/${self:provider.stage}/*
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+            - s3:PutObjectAcl
+          Resource:
+            - !Sub '${InventoryAssetsBucket.Arn}/*'
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+          Resource:
+            - !GetAtt InventoryAssetsBucket.Arn
   httpApi:
     authorizers:
       jwtAuthorizer:
@@ -72,14 +86,14 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  createProduct:
-    handler: src/functions/products/createProduct.handler
-    events:
-      - httpApi:
-          path: /products
-          method: post
-          # authorizer:
-          #   name: jwtAuthorizer
+  # createProduct:
+  #   handler: src/functions/products/createProduct.handler
+  #   events:
+  #     - httpApi:
+  #         path: /products
+  #         method: post
+  #         # authorizer:
+  #         #   name: jwtAuthorizer
 
   getProduct:
     handler: src/functions/products/getProduct.handler
@@ -166,14 +180,14 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  createCategory:
-    handler: src/functions/categories/createCategory.handler
-    events:
-      - httpApi:
-          path: /categories
-          method: post
-          authorizer:
-            name: jwtAuthorizer
+  # createCategory:
+  #   handler: src/functions/categories/createCategory.handler
+  #   events:
+  #     - httpApi:
+  #         path: /categories
+  #         method: post
+  #         authorizer:
+  #           name: jwtAuthorizer
 
   # Upload Endpoints
   generatePresignedUrls:
@@ -186,14 +200,14 @@ functions:
             name: jwtAuthorizer
 
   # Business Type Management
-  createBusinessType:
-    handler: src/functions/business-types/createBusinessType.handler
-    events:
-      - httpApi:
-          path: /business-types
-          method: post
-          authorizer:
-            name: jwtAuthorizer
+  # createBusinessType:
+  #   handler: src/functions/business-types/createBusinessType.handler
+  #   events:
+  #     - httpApi:
+  #         path: /business-types
+  #         method: post
+  #         authorizer:
+  #           name: jwtAuthorizer
 
   # Business Endpoints
   getBusinesses:
@@ -205,14 +219,14 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  createBusiness:
-    handler: src/functions/businesses/createBusiness.handler
-    events:
-      - httpApi:
-          path: /businesses
-          method: post
-          authorizer:
-            name: jwtAuthorizer
+  # createBusiness:
+  #   handler: src/functions/businesses/createBusiness.handler
+  #   events:
+  #     - httpApi:
+  #         path: /businesses
+  #         method: post
+  #         authorizer:
+  #           name: jwtAuthorizer
 
   getBusinessById:
     handler: src/functions/businesses/getBusinessById.handler
@@ -240,3 +254,41 @@ functions:
           method: delete
           authorizer:
             name: jwtAuthorizer
+
+resources:
+  Resources:
+    InventoryAssetsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-assets-${self:provider.stage}-${aws:accountId}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
+
+    InventoryAssetsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref InventoryAssetsBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: '*'
+              Action:
+                - s3:GetObject
+              Resource: !Sub '${InventoryAssetsBucket.Arn}/*'
