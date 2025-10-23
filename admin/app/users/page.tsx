@@ -18,6 +18,7 @@ interface Business {
 
 interface UserProfile {
   id: string;
+  full_name: string | null;
   business_type_id: string | null;
   business_id: string | null;
   is_admin: boolean;
@@ -41,6 +42,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    full_name: '',
     business_id: '',
     role: 'agent' as 'admin' | 'manager' | 'agent',
   });
@@ -52,8 +54,13 @@ export default function UsersPage() {
 
   async function fetchUsers() {
     try {
+      // Get all users from auth
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+
+      if (authError) throw authError;
+
       // Get all user profiles with businesses
-      const { data: profiles, error } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from('user_profiles')
         .select(`
           *,
@@ -68,9 +75,20 @@ export default function UsersPage() {
           )
         `);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      setUsers(profiles as unknown as User[]);
+      // Merge auth users with their profiles
+      const mergedUsers = authUsers.map((authUser) => {
+        const profile = profiles?.find((p) => p.id === authUser.id);
+        return {
+          id: authUser.id,
+          email: authUser.email || '',
+          created_at: authUser.created_at,
+          profile,
+        };
+      });
+
+      setUsers(mergedUsers as User[]);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -111,11 +129,25 @@ export default function UsersPage() {
     setLoading(true);
 
     try {
-      // Create user via Supabase Auth Admin
+      // Get business details if business_id is provided
+      let businessName = null;
+      if (formData.business_id) {
+        const business = businesses.find(b => b.id === formData.business_id);
+        businessName = business?.name || null;
+      }
+
+      // Create user via Supabase Auth Admin with metadata
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: formData.email,
         password: formData.password,
         email_confirm: true,
+        user_metadata: {
+          full_name: formData.full_name,
+          role: formData.role,
+          business_id: formData.business_id || null,
+          business_name: businessName,
+          is_admin: formData.role === 'admin',
+        },
       });
 
       if (authError) throw authError;
@@ -125,6 +157,7 @@ export default function UsersPage() {
         .from('user_profiles')
         .insert({
           id: authData.user.id,
+          full_name: formData.full_name,
           business_id: formData.business_id || null,
           role: formData.role,
           is_admin: formData.role === 'admin',
@@ -138,7 +171,7 @@ export default function UsersPage() {
 
       alert('User created successfully');
       setShowCreateForm(false);
-      setFormData({ email: '', password: '', business_id: '', role: 'agent' });
+      setFormData({ email: '', password: '', full_name: '', business_id: '', role: 'agent' });
       fetchUsers();
     } catch (error: any) {
       alert(`Error creating user: ${error.message}`);
@@ -177,6 +210,20 @@ export default function UsersPage() {
           <div className="bg-white rounded-lg shadow p-6 mb-8">
             <h2 className="text-2xl font-semibold mb-4">Create New User</h2>
             <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="John Doe"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
@@ -262,13 +309,13 @@ export default function UsersPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Business
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Business Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
@@ -282,13 +329,13 @@ export default function UsersPage() {
               {users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.profile?.full_name || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.email || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.profile?.businesses?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {user.profile?.businesses?.business_types?.name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
