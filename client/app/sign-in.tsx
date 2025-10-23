@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,15 +27,30 @@ export default function SignInScreen() {
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
     try {
       await signIn(email, password);
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Sign In Failed', error.message);
+      Alert.alert('Sign In Failed', error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = () => {
+    Alert.alert(
+      'Forgot Password',
+      'Please contact your administrator to reset your password.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -47,19 +63,20 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to manage your inventory</Text>
+          <Text style={styles.title}>Bienvenue</Text>
+          <Text style={styles.subtitle}>Connectez-vous pour gérer votre inventaire</Text>
         </View>
 
         <View style={styles.form}>
           <Input
-            label="Email"
+            label="Adresse e-mail"
             placeholder="your@email.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            editable={!loading}
           />
 
           <Input
@@ -70,19 +87,24 @@ export default function SignInScreen() {
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
+            editable={!loading}
+            onSubmitEditing={handleSignIn}
+            returnKeyType="done"
           />
+
+          <TouchableOpacity
+            onPress={handleForgotPassword}
+            style={styles.forgotPassword}
+            disabled={loading}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
 
           <Button
             title="Sign In"
             onPress={handleSignIn}
             loading={loading}
             style={styles.signInButton}
-          />
-
-          <Button
-            title="Don't have an account? Sign Up"
-            onPress={() => router.push('/sign-up')}
-            variant="outline"
           />
         </View>
       </ScrollView>
@@ -102,6 +124,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
+    alignItems: 'center',
   },
   title: {
     ...Typography.displayHeading,
@@ -115,5 +138,13 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: Spacing.md,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing.xs,
+  },
+  forgotPasswordText: {
+    ...Typography.bodySecondary,
+    color: Colors.accent.primary,
   },
 });
