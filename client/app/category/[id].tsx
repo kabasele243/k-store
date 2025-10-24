@@ -61,8 +61,24 @@ export default function CategoryProductsScreen() {
   // Filter products by category
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const categoryId = product.product_categories?.[0]?.category_id;
-      return categoryId === id;
+      // Handle both data structures
+      if (product.product_categories?.[0]?.category_id) {
+        return product.product_categories[0].category_id === id;
+      }
+
+      // Handle category_ids as JSON string
+      if (product.category_ids) {
+        try {
+          const categoryIds = typeof product.category_ids === 'string'
+            ? JSON.parse(product.category_ids)
+            : product.category_ids;
+          return categoryIds.includes(id);
+        } catch {
+          return false;
+        }
+      }
+
+      return false;
     });
   }, [products, id]);
 
