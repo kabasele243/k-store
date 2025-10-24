@@ -224,31 +224,36 @@ export default function ProductDetailScreen() {
         }}
       />
       <View style={styles.container}>
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
-            onPress={() => setActiveTab('overview')}
-          >
-            <Text style={[styles.tabText, activeTab === 'overview' && styles.activeTabText]}>
-              Overview
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'variants' && styles.activeTab]}
-            onPress={() => setActiveTab('variants')}
-          >
-            <Text style={[styles.tabText, activeTab === 'variants' && styles.activeTabText]}>
-              Variants
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'inventory' && styles.activeTab]}
-            onPress={() => setActiveTab('inventory')}
-          >
-            <Text style={[styles.tabText, activeTab === 'inventory' && styles.activeTabText]}>
-              Inventory
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.tabBarWrapper}>
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
+              onPress={() => setActiveTab('overview')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'overview' && styles.activeTabText]}>
+                Overview
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'variants' && styles.activeTab]}
+              onPress={() => setActiveTab('variants')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'variants' && styles.activeTabText]}>
+                Variants
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'inventory' && styles.activeTab]}
+              onPress={() => setActiveTab('inventory')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'inventory' && styles.activeTabText]}>
+                Inventory
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView style={styles.scrollView}>
@@ -292,26 +297,44 @@ const styles = StyleSheet.create({
     ...Typography.bodyPrimary,
     color: Colors.status.danger,
   },
+  tabBarWrapper: {
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    backgroundColor: Colors.background.primary,
+  },
   tabBar: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.primary,
-    backgroundColor: Colors.background.primary,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: 12,
+    padding: 3,
+    gap: 3,
   },
   tab: {
     flex: 1,
-    paddingVertical: Spacing.md,
+    paddingVertical: 11,
+    paddingHorizontal: Spacing.sm,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
+    borderRadius: 9,
+    backgroundColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: Colors.accent.primary,
+    backgroundColor: Colors.background.primary,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 2.5,
+    elevation: 2,
   },
   tabText: {
-    ...Typography.bodyPrimary,
+    fontSize: 14,
     color: Colors.text.secondary,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   activeTabText: {
     color: Colors.accent.primary,

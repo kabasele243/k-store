@@ -26,10 +26,6 @@ export const handler = async (
         variants:variants(
           *,
           inventory:inventory_items(*)
-        ),
-        product_categories(
-          category_id,
-          categories(*)
         )
       `)
       .eq('id', productId)
