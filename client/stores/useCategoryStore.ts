@@ -1,40 +1,35 @@
 import { create } from 'zustand';
-import { apiFetch } from '@/utils/api';
+import { getCategoriesByBusinessType, CategoryConfig } from '@shared/constants';
 
-export interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  parent_category_id?: string;
-  business_type_id?: string;
-  created_at: string;
-  updated_at?: string;
+// Category now comes from static constants, not API
+export interface Category extends CategoryConfig {
+  // All fields come from CategoryConfig: id, name, description, imagePath, tag
 }
 
 interface CategoryStore {
   categories: Category[];
-  loading: boolean;
-  error: string | null;
+  selectedBusinessType: string | null;
 
   // Actions
-  fetchCategories: (token: string) => Promise<void>;
-  clearError: () => void;
+  setBusinessType: (businessType: string) => void;
+  getCategories: () => Category[];
+  getCategoryById: (id: string) => Category | undefined;
 }
 
-export const useCategoryStore = create<CategoryStore>((set) => ({
+export const useCategoryStore = create<CategoryStore>((set, get) => ({
   categories: [],
-  loading: false,
-  error: null,
+  selectedBusinessType: null,
 
-  fetchCategories: async (token: string) => {
-    set({ loading: true, error: null });
-    try {
-      const data = await apiFetch<Category[]>('/categories', { token });
-      set({ categories: data || [], loading: false });
-    } catch (error: any) {
-      set({ error: error.message, loading: false });
-    }
+  setBusinessType: (businessType: string) => {
+    const categories = getCategoriesByBusinessType(businessType);
+    set({ selectedBusinessType: businessType, categories });
   },
 
-  clearError: () => set({ error: null }),
+  getCategories: () => {
+    return get().categories;
+  },
+
+  getCategoryById: (id: string) => {
+    return get().categories.find(cat => cat.id === id);
+  },
 }));

@@ -6,7 +6,7 @@ const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
 });
 
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'inventory-product-images';
+const BUCKET_NAME = process.env.INVENTORY_ASSETS_BUCKET;
 
 export interface PresignedUrlResult {
   uploadUrl: string;

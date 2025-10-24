@@ -19,47 +19,36 @@ import { CategoryCard } from '@/components/ui/CategoryCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function CategoriesScreen() {
-  const { user, session } = useAuth();
-  const { categories, loading, error, fetchCategories, clearError } = useCategoryStore();
+  const { user } = useAuth();
+  const { categories, setBusinessType } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (!user || !session) {
+    if (!user) {
       return;
     }
-    fetchCategories(session.access_token).then(() => {
-      setLastRefreshed(new Date());
-    });
-  }, [user, session]);
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Error', error);
-      clearError();
-    }
-  }, [error]);
+    // Set business type to load categories from static constants
+    // TODO: Get user's actual business type from user profile
+    setBusinessType('clothing-boutique');
+  }, [user]);
 
   const handleRefresh = () => {
-    if (session) {
-      fetchCategories(session.access_token).then(() => {
-        setLastRefreshed(new Date());
-      });
-    }
+    // Categories are static, so just reload them
+    setBusinessType('clothing-boutique');
   };
 
-  const getTimeAgo = (date: Date | null): string => {
-    if (!date) return '';
+  // const getTimeAgo = (date: Date | null): string => {
+  //   if (!date) return '';
 
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  //   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return `${Math.floor(seconds / 86400)}d ago`;
-  };
+  //   if (seconds < 60) return 'just now';
+  //   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  //   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  //   return `${Math.floor(seconds / 86400)}d ago`;
+  // };
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -92,20 +81,6 @@ export default function CategoriesScreen() {
     );
   };
 
-  const renderSkeletonLoading = () => (
-    <View style={styles.container}>
-      <View style={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <View key={i} style={styles.skeletonCard} />
-        ))}
-      </View>
-    </View>
-  );
-
-  if (loading && categories.length === 0) {
-    return renderSkeletonLoading();
-  }
-
   return (
     <View style={styles.container}>
       <FlatList
@@ -114,15 +89,15 @@ export default function CategoriesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={false} onRefresh={handleRefresh} />
         }
-        ListHeaderComponent={
-          activeCategory ? (
-            <View style={styles.activeIndicator}>
-              <Text style={styles.activeText}>Active Category: {activeCategory}</Text>
-            </View>
-          ) : null
-        }
+        // ListHeaderComponent={
+        //   activeCategory ? (
+        //     <View style={styles.activeIndicator}>
+        //       <Text style={styles.activeText}>Active Category: {activeCategory}</Text>
+        //     </View>
+        //   ) : null
+        // }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>

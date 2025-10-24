@@ -196,8 +196,8 @@ functions:
       - httpApi:
           path: /uploads/presigned-urls
           method: post
-          authorizer:
-            name: jwtAuthorizer
+          # authorizer:
+          #   name: jwtAuthorizer
 
   # Business Type Management
   # createBusinessType:

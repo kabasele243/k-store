@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground }
 import { Bookmark } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getCategoryImage } from '@/utils/categoryImages';
 
 interface CategoryCardProps {
   category: {
@@ -10,7 +11,7 @@ interface CategoryCardProps {
     name: string;
     description?: string;
     tag?: string;
-    imageUrl?: string;
+    imagePath?: string; // Changed from image_url to imagePath
   };
   onPress: () => void;
   isActive?: boolean;
@@ -24,7 +25,11 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   onPress,
   isActive = false
 }) => {
-  const placeholderImage = category.imageUrl || `https://placehold.co/600x400/F3F4F6/6B7280?text=${encodeURIComponent(category.name)}`;
+  // Get local image from category imagePath
+  const categoryImage = category.imagePath
+    ? getCategoryImage(category.imagePath)
+    : require('@/assets/images/categories/accessoires.jpg'); // fallback
+
 
   return (
     <TouchableOpacity
@@ -37,7 +42,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       activeOpacity={0.8}
     >
       <ImageBackground
-        source={{ uri: placeholderImage }}
+        source={categoryImage}
         style={styles.imageBackground}
         imageStyle={styles.image}
       >

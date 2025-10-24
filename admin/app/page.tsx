@@ -24,22 +24,6 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/business-types"
-            className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Business Types</h2>
-            <p className="text-gray-600">Create and manage business types</p>
-          </Link>
-
-          <Link
-            href="/categories"
-            className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Categories</h2>
-            <p className="text-gray-600">Manage product categories</p>
-          </Link>
-
-          <Link
             href="/products"
             className="block p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
           >

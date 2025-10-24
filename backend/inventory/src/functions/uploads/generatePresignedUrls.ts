@@ -7,10 +7,10 @@ import {
 import { generateMultiplePresignedUrls } from '../../libs/s3Client';
 
 interface GeneratePresignedUrlsRequest {
-  folder: string; // 'products' or 'variants'
+  folder: string; // 'products', 'variants', or 'categories'
   count: number; // Number of URLs to generate
   contentType?: string; // Optional content type, defaults to 'image/jpeg'
-  entity_id?: string; // Optional product_id or variant_id to organize files
+  entity_id?: string; // Optional product_id, variant_id, or category_id to organize files
 }
 
 export const handler = async (
@@ -33,7 +33,7 @@ export const handler = async (
     }
 
     // Validate folder
-    const allowedFolders = ['products', 'variants'];
+    const allowedFolders = ['products', 'variants', 'categories'];
     if (!allowedFolders.includes(requestBody.folder)) {
       throw new ApiError(400, `Folder must be one of: ${allowedFolders.join(', ')}`);
     }
@@ -60,6 +60,8 @@ export const handler = async (
       },
     });
   } catch (error) {
+    console.error('Error in generatePresignedUrls:', error);
+    console.error('Request body:', event.body);
     return handleError(error);
   }
 };

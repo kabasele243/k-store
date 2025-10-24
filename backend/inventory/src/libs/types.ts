@@ -4,7 +4,8 @@ export interface Product {
   name: string;
   description?: string;
   brand?: string;
-  category?: string;
+  category?: string; // Deprecated - use category_ids
+  category_ids?: string[]; // Array of category IDs from static constants
   created_at: string;
 }
 
@@ -102,19 +103,13 @@ export interface JWTPayload {
   exp?: number;
 }
 
-// Business Type and Category types
-export interface BusinessType {
-  id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
+// Business Type and Category types (now from static constants)
+// Import from shared constants: import { BusinessTypeConfig, CategoryConfig } from '@/shared/constants';
 
 export interface Business {
   id: string;
   name: string;
-  business_type_id: string;
+  business_type: string; // Changed from business_type_id to business_type (string from static constants)
   description?: string;
   email?: string;
   phone?: string;
@@ -127,36 +122,13 @@ export interface Business {
   updated_at: string;
 }
 
-export interface BusinessWithType extends Business {
-  business_types?: BusinessType;
-}
-
-export interface Category {
-  id: string;
-  business_type_id: string;
-  parent_category_id?: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CategoryWithChildren extends Category {
-  children?: Category[];
-}
-
-export interface ProductCategory {
-  id: string;
-  product_id: string;
-  category_id: string;
-  created_at: string;
-}
-
 export interface UserProfile {
   id: string;
-  business_type_id?: string;
+  business_type?: string; // Changed from business_type_id to business_type (string from static constants)
   business_id?: string;
   is_admin: boolean;
+  role?: 'admin' | 'manager' | 'agent';
+  full_name?: string;
   created_at: string;
   updated_at: string;
 }
@@ -164,7 +136,7 @@ export interface UserProfile {
 // API Request types for new entities
 export interface CreateBusinessRequest {
   name: string;
-  business_type_id: string;
+  business_type: string; // Changed from business_type_id
   description?: string;
   email?: string;
   phone?: string;
@@ -185,19 +157,6 @@ export interface UpdateBusinessRequest {
   state?: string;
   zip_code?: string;
   country?: string;
-}
-
-export interface CreateCategoryRequest {
-  business_type_id: string;
-  parent_category_id?: string;
-  name: string;
-  description?: string;
-}
-
-export interface UpdateCategoryRequest {
-  name?: string;
-  description?: string;
-  parent_category_id?: string;
 }
 
 // Lambda Event types
