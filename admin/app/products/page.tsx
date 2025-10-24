@@ -3,11 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-
-interface Category {
-  id: string;
-  name: string;
-}
+import { getAllCategories, getCategoryById } from '@/lib/constants';
 
 interface InventoryItem {
   id: string;
@@ -29,24 +25,20 @@ interface Product {
   description: string;
   brand: string;
   category: string;
+  category_ids?: string[]; // New field for static category IDs
   created_at: string;
   variants?: Variant[];
-  product_categories?: {
-    category_id: string;
-    categories: Category;
-  }[];
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     brand: '',
-    category_id: '',
+    category_ids: [] as string[],
     variants: [
       {
         sku: '',
@@ -57,9 +49,11 @@ export default function ProductsPage() {
     ],
   });
 
+  // Get categories from static constants
+  const categories = getAllCategories();
+
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
   }, []);
 
   async function fetchProducts() {
@@ -71,10 +65,6 @@ export default function ProductsPage() {
           variants (
             *,
             inventory_items (*)
-          ),
-          product_categories (
-            category_id,
-            categories (*)
           )
         `)
         .order('created_at', { ascending: false });
@@ -88,50 +78,24 @@ export default function ProductsPage() {
     }
   }
 
-  async function fetchCategories() {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  }
-
   async function handleCreateProduct(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Create product
+      // Create product with category_ids as JSONB array
       const { data: product, error: productError } = await supabase
         .from('products')
         .insert({
           name: formData.name,
           description: formData.description || null,
           brand: formData.brand || null,
-          category: formData.category_id || null,
+          category_ids: formData.category_ids,
         })
         .select()
         .single();
 
       if (productError) throw productError;
-
-      // Create product-category association if category selected
-      if (formData.category_id) {
-        const { error: categoryError } = await supabase
-          .from('product_categories')
-          .insert({
-            product_id: product.id,
-            category_id: formData.category_id,
-          });
-
-        if (categoryError) throw categoryError;
-      }
 
       // Create variants and inventory
       for (const variant of formData.variants) {
@@ -168,7 +132,7 @@ export default function ProductsPage() {
         name: '',
         description: '',
         brand: '',
-        category_id: '',
+        category_ids: [],
         variants: [
           {
             sku: '',
@@ -216,6 +180,21 @@ export default function ProductsPage() {
       (newVariants[index] as any)[field] = value;
     }
     setFormData({ ...formData, variants: newVariants });
+  }
+
+  function toggleCategory(categoryId: string) {
+    const currentIds = formData.category_ids;
+    if (currentIds.includes(categoryId)) {
+      setFormData({
+        ...formData,
+        category_ids: currentIds.filter(id => id !== categoryId),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        category_ids: [...currentIds, categoryId],
+      });
+    }
   }
 
   if (loading && products.length === 0) {
@@ -288,21 +267,28 @@ export default function ProductsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categories (select multiple)
                 </label>
-                <select
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select a category (optional)</option>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
+                    <label
+                      key={cat.id}
+                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${formData.category_ids.includes(cat.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.category_ids.includes(cat.id)}
+                        onChange={() => toggleCategory(cat.id)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">{cat.name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="border-t pt-6">
@@ -435,11 +421,19 @@ export default function ProductsPage() {
                 <p className="text-gray-600 mb-4">{product.description}</p>
               )}
 
-              {product.product_categories && product.product_categories.length > 0 && (
-                <div className="mb-3">
-                  <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                    {product.product_categories[0].categories.name}
-                  </span>
+              {product.category_ids && product.category_ids.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-1">
+                  {product.category_ids.map((catId) => {
+                    const category = getCategoryById(catId);
+                    return category ? (
+                      <span
+                        key={catId}
+                        className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                      >
+                        {category.name}
+                      </span>
+                    ) : null;
+                  })}
                 </div>
               )}
 

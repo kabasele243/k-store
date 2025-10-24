@@ -24,6 +24,8 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
+    console.log(`Failed to fetch ${endpoint}: ${response.statusText}`);
+    console.log({ response });
     throw new Error(`Failed to fetch ${endpoint}`);
   }
 

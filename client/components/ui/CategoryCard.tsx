@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
   },
   cardActive: {
     borderWidth: 3,
-    borderColor: Colors.accent.primary,
     transform: [{ scale: 1.02 }],
     ...Shadows.lg,
   },
