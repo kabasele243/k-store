@@ -21,7 +21,7 @@ export const CATEGORIES_BY_BUSINESS_TYPE = {
       name: 'Robes',
       description: 'Collection de robes élégantes',
       imagePath: 'categories/robes.jpg',
-      tag: 'POPULAR',
+      // tag: 'POPULAR',
     },
     {
       id: 'pantalon',
