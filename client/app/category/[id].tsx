@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   StyleSheet,
   RefreshControl,
   Alert,
-  TextInput,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,8 +19,6 @@ export default function CategoryProductsScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { session } = useAuth();
   const { products, loading, error, fetchProducts, clearError, deleteProduct } = useProductStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!session) return;
@@ -62,22 +59,12 @@ export default function CategoryProductsScreen() {
   };
 
   // Filter products by category
-  const categoryProducts = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const categoryId = product.product_categories?.[0]?.category_id;
       return categoryId === id;
     });
   }, [products, id]);
-
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return categoryProducts;
-
-    const query = searchQuery.toLowerCase();
-    return categoryProducts.filter(product =>
-      product.name.toLowerCase().includes(query) ||
-      product.brand?.toLowerCase().includes(query)
-    );
-  }, [categoryProducts, searchQuery]);
 
   const handleDeleteProduct = async (productId: string) => {
     if (!session) return;
@@ -104,30 +91,17 @@ export default function CategoryProductsScreen() {
 
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.titleContainer}>
-            <Button
-              title="← Back"
-              onPress={() => router.back()}
-              variant="outline"
-              style={styles.backButton}
-            />
-            <Text style={styles.title}>{name || 'Category'}</Text>
-          </View>
+        <Button
+          title="← Back"
+          onPress={() => router.back()}
+          variant="outline"
+          style={styles.backButton}
+        />
+        <View style={styles.titleSection}>
+          <Text style={styles.title}>{name || 'Category'}</Text>
           <Text style={styles.productCount}>{filteredProducts.length} products</Text>
         </View>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search products..."
-          placeholderTextColor={Colors.text.secondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          clearButtonMode="while-editing"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
       </View>
 
       <FlatList
@@ -140,20 +114,12 @@ export default function CategoryProductsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {searchQuery ? 'No products found' : 'No products in this category'}
-            </Text>
+            <Text style={styles.emptyText}>No products in this category</Text>
             <Text style={styles.emptySubtext}>
-              {searchQuery ? 'Try adjusting your search' : 'Add products to this category to see them here'}
+              Add products to this category to see them here
             </Text>
           </View>
         }
-      />
-
-      <Button
-        title="Add Product"
-        onPress={() => router.push('/add-product')}
-        style={[styles.addButton, { bottom: Math.max(insets.bottom, Spacing.lg) }]}
       />
     </View>
   );
@@ -166,63 +132,46 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: Spacing.screenPadding,
-    paddingTop: Spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.primary,
-    gap: Spacing.md,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    paddingTop: Spacing.xl * 2,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.lg,
   },
   backButton: {
     paddingHorizontal: Spacing.md,
     height: 36,
+    alignSelf: 'flex-start',
+  },
+  titleSection: {
+    gap: Spacing.xs,
   },
   title: {
     ...Typography.displayHeading,
-    fontSize: 20,
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   productCount: {
     ...Typography.label,
+    fontSize: 15,
     color: Colors.text.secondary,
-    fontWeight: '600',
-  },
-  searchBar: {
-    height: 48,
-    backgroundColor: Colors.surface.primary,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border.primary,
-    fontSize: Typography.bodyPrimary.fontSize,
-    color: Colors.text.primary,
+    fontWeight: '500',
   },
   listContent: {
     padding: Spacing.screenPadding,
-    paddingBottom: 80,
+    paddingBottom: Spacing.xl,
   },
   emptyContainer: {
     alignItems: 'center',
-    marginTop: Spacing.xl * 2,
+    marginTop: Spacing.xl * 3,
   },
   emptyText: {
     ...Typography.sectionTitle,
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: Spacing.sm,
   },
   emptySubtext: {
     ...Typography.bodySecondary,
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: Spacing.lg,
-    left: Spacing.screenPadding,
-    right: Spacing.screenPadding,
+    textAlign: 'center',
   },
 });
