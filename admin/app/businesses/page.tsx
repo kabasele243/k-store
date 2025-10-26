@@ -3,12 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-
-interface BusinessType {
-  id: string;
-  name: string;
-  description?: string;
-}
+import { ALL_BUSINESS_TYPES, getBusinessTypeById } from '@/lib/constants/businessTypes';
 
 interface Business {
   id: string;
@@ -24,12 +19,10 @@ interface Business {
   postal_code?: string;
   country?: string;
   created_at: string;
-  business_types?: BusinessType;
 }
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -50,21 +43,13 @@ export default function BusinessesPage() {
 
   useEffect(() => {
     fetchBusinesses();
-    fetchBusinessTypes();
   }, []);
 
   async function fetchBusinesses() {
     try {
       const { data, error } = await supabase
         .from('businesses')
-        .select(`
-          *,
-          business_types (
-            id,
-            name,
-            description
-          )
-        `)
+        .select('*')
         .order('name');
 
       if (error) throw error;
@@ -76,19 +61,6 @@ export default function BusinessesPage() {
     }
   }
 
-  async function fetchBusinessTypes() {
-    try {
-      const { data, error } = await supabase
-        .from('business_types')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setBusinessTypes(data || []);
-    } catch (error) {
-      console.error('Error fetching business types:', error);
-    }
-  }
 
   async function handleCreateBusiness(e: React.FormEvent) {
     e.preventDefault();
@@ -278,7 +250,7 @@ export default function BusinessesPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select a business type</option>
-                    {businessTypes.map((type) => (
+                    {ALL_BUSINESS_TYPES.map((type) => (
                       <option key={type.id} value={type.id}>
                         {type.name}
                       </option>
@@ -441,7 +413,7 @@ export default function BusinessesPage() {
                   <input
                     type="text"
                     disabled
-                    value={editingBusiness.business_types?.name || 'Unknown'}
+                    value={getBusinessTypeById(editingBusiness.business_type_id)?.name || 'Unknown'}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
                   />
                   <p className="text-xs text-gray-500 mt-1">Business type cannot be changed</p>
@@ -591,7 +563,7 @@ export default function BusinessesPage() {
                   {business.name}
                 </h3>
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {business.business_types?.name || 'Unknown'}
+                  {getBusinessTypeById(business.business_type_id)?.name || 'Unknown'}
                 </span>
               </div>
 
