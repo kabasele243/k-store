@@ -20,10 +20,9 @@ interface Variant {
   sku: string;
   price: number;
   attributes?: Record<string, any>;
-  inventory_items?: Array<{
+  sales?: Array<{
     id: string;
-    quantity: number;
-    location: string;
+    sold_at: string;
   }>;
 }
 
@@ -54,26 +53,19 @@ export default function UpdateProductModal({
 }: UpdateProductModalProps) {
   const { session } = useAuth();
   const [selectedVariantId, setSelectedVariantId] = useState('');
-  const [selectedInventoryId, setSelectedInventoryId] = useState('');
   const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
+  const [salesCount, setSalesCount] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const selectedVariant = variants.find(v => v.id === selectedVariantId);
-  const inventoryLocations = selectedVariant?.inventory_items || [];
 
   useEffect(() => {
     if (visible && variants.length > 0) {
       // Auto-select first variant
       setSelectedVariantId(variants[0].id);
       setPrice(variants[0].price.toString());
-
-      // Auto-select first inventory location if available
-      if (variants[0].inventory_items && variants[0].inventory_items.length > 0) {
-        setSelectedInventoryId(variants[0].inventory_items[0].id);
-        setQuantity(variants[0].inventory_items[0].quantity.toString());
-      }
+      setSalesCount('');
     }
   }, [visible, variants]);
 
@@ -82,24 +74,7 @@ export default function UpdateProductModal({
     const variant = variants.find(v => v.id === variantId);
     if (variant) {
       setPrice(variant.price.toString());
-
-      // Auto-select first inventory location
-      if (variant.inventory_items && variant.inventory_items.length > 0) {
-        setSelectedInventoryId(variant.inventory_items[0].id);
-        setQuantity(variant.inventory_items[0].quantity.toString());
-      } else {
-        setSelectedInventoryId('');
-        setQuantity('');
-      }
-    }
-    setErrors({});
-  };
-
-  const handleInventoryLocationChange = (inventoryId: string) => {
-    setSelectedInventoryId(inventoryId);
-    const inventory = inventoryLocations.find(inv => inv.id === inventoryId);
-    if (inventory) {
-      setQuantity(inventory.quantity.toString());
+      setSalesCount('');
     }
     setErrors({});
   };
@@ -115,16 +90,12 @@ export default function UpdateProductModal({
       newErrors.price = 'Invalid price';
     }
 
-    if (quantity && (isNaN(parseInt(quantity)) || parseInt(quantity) < 0)) {
-      newErrors.quantity = 'Invalid quantity';
+    if (salesCount && (isNaN(parseInt(salesCount)) || parseInt(salesCount) <= 0)) {
+      newErrors.salesCount = 'Invalid sales count';
     }
 
-    if (!price && !quantity) {
-      newErrors.general = 'Please update at least price or quantity';
-    }
-
-    if (quantity && !selectedInventoryId) {
-      newErrors.inventory = 'Please select a location';
+    if (!price && !salesCount) {
+      newErrors.general = 'Please update price or record sales';
     }
 
     setErrors(newErrors);
@@ -137,34 +108,32 @@ export default function UpdateProductModal({
 
     setLoading(true);
     try {
-      // Build update payload
-      const updatePayload: any = {};
-
-      // Add price if changed
+      // Update price if changed
       if (price && selectedVariant && parseFloat(price) !== selectedVariant.price) {
-        updatePayload.price = parseFloat(price);
-      }
-
-      // Add inventory quantity if changed
-      if (quantity && selectedInventoryId) {
-        const currentInventory = inventoryLocations.find(inv => inv.id === selectedInventoryId);
-        const newQuantity = parseInt(quantity);
-
-        if (currentInventory && newQuantity !== currentInventory.quantity) {
-          updatePayload.inventory_id = selectedInventoryId;
-          updatePayload.quantity = newQuantity;
-        }
-      }
-
-      // Make single API call to update both price and quantity
-      if (Object.keys(updatePayload).length > 0) {
         await apiFetch(`/variants/${selectedVariantId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           token: session.access_token,
-          body: JSON.stringify(updatePayload),
+          body: JSON.stringify({
+            price: parseFloat(price),
+          }),
+        });
+      }
+
+      // Record sales if provided
+      if (salesCount) {
+        await apiFetch(`/inventory/add-stock`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          token: session.access_token,
+          body: JSON.stringify({
+            variant_id: selectedVariantId,
+            quantity: parseInt(salesCount),
+          }),
         });
       }
 
@@ -246,50 +215,30 @@ export default function UpdateProductModal({
               />
             </View>
 
-            {inventoryLocations.length > 0 && (
-              <>
-                <View style={styles.section}>
-                  <Text style={styles.label}>Select Location</Text>
-                  <View style={styles.pickerWrapper}>
-                    {inventoryLocations.map((inv) => (
-                      <TouchableOpacity
-                        key={inv.id}
-                        style={[
-                          styles.pickerOption,
-                          selectedInventoryId === inv.id && styles.pickerOptionSelected
-                        ]}
-                        onPress={() => handleInventoryLocationChange(inv.id)}
-                      >
-                        <Text style={[
-                          styles.pickerOptionText,
-                          selectedInventoryId === inv.id && styles.pickerOptionTextSelected
-                        ]}>
-                          {inv.location} ({inv.quantity} units)
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  {errors.inventory && <Text style={styles.errorText}>{errors.inventory}</Text>}
-                </View>
+            <View style={styles.section}>
+              <Input
+                label="Record Sales"
+                value={salesCount}
+                onChangeText={(text) => {
+                  setSalesCount(text);
+                  if (errors.salesCount) {
+                    const newErrors = { ...errors };
+                    delete newErrors.salesCount;
+                    setErrors(newErrors);
+                  }
+                }}
+                placeholder="Number of items sold"
+                keyboardType="number-pad"
+                error={errors.salesCount}
+              />
+            </View>
 
-                <View style={styles.section}>
-                  <Input
-                    label="Quantity"
-                    value={quantity}
-                    onChangeText={(text) => {
-                      setQuantity(text);
-                      if (errors.quantity) {
-                        const newErrors = { ...errors };
-                        delete newErrors.quantity;
-                        setErrors(newErrors);
-                      }
-                    }}
-                    placeholder="0"
-                    keyboardType="number-pad"
-                    error={errors.quantity}
-                  />
-                </View>
-              </>
+            {selectedVariant && selectedVariant.sales && (
+              <View style={styles.section}>
+                <Text style={styles.label}>
+                  Total Sales: {selectedVariant.sales.length}
+                </Text>
+              </View>
             )}
           </ScrollView>
 

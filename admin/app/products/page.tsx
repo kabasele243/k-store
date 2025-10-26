@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getAllCategories, getCategoryById } from '@/lib/constants';
 
-interface InventoryItem {
+interface Sale {
   id: string;
-  quantity: number;
-  location: string;
+  sold_at: string;
 }
 
 interface Variant {
@@ -16,7 +15,7 @@ interface Variant {
   sku: string;
   price: number;
   attributes: Record<string, string>;
-  inventory_items?: InventoryItem[];
+  sales?: Sale[];
 }
 
 interface Product {
@@ -44,7 +43,6 @@ export default function ProductsPage() {
         sku: '',
         price: '',
         attributes: { size: '', color: '' },
-        inventory: [{ quantity: '', location: 'Default Location' }],
       },
     ],
   });
@@ -64,7 +62,7 @@ export default function ProductsPage() {
           *,
           variants (
             *,
-            inventory_items (*)
+            sales (*)
           )
         `)
         .order('created_at', { ascending: false });
@@ -97,33 +95,18 @@ export default function ProductsPage() {
 
       if (productError) throw productError;
 
-      // Create variants and inventory
+      // Create variants
       for (const variant of formData.variants) {
-        const { data: newVariant, error: variantError } = await supabase
+        const { error: variantError } = await supabase
           .from('variants')
           .insert({
             product_id: product.id,
             sku: variant.sku,
             price: parseFloat(variant.price),
             attributes: variant.attributes,
-          })
-          .select()
-          .single();
+          });
 
         if (variantError) throw variantError;
-
-        // Create inventory items for this variant
-        for (const inv of variant.inventory) {
-          const { error: inventoryError } = await supabase
-            .from('inventory_items')
-            .insert({
-              variant_id: newVariant.id,
-              quantity: parseInt(inv.quantity),
-              location: inv.location,
-            });
-
-          if (inventoryError) throw inventoryError;
-        }
       }
 
       alert('Product created successfully');
@@ -138,7 +121,6 @@ export default function ProductsPage() {
             sku: '',
             price: '',
             attributes: { size: '', color: '' },
-            inventory: [{ quantity: '', location: 'Default Location' }],
           },
         ],
       });
@@ -159,7 +141,6 @@ export default function ProductsPage() {
           sku: '',
           price: '',
           attributes: { size: '', color: '' },
-          inventory: [{ quantity: '', location: 'Default Location' }],
         },
       ],
     });
@@ -174,8 +155,6 @@ export default function ProductsPage() {
     const newVariants = [...formData.variants];
     if (field === 'size' || field === 'color') {
       newVariants[index].attributes[field] = value;
-    } else if (field === 'quantity' || field === 'location') {
-      newVariants[index].inventory[0][field] = value;
     } else {
       (newVariants[index] as any)[field] = value;
     }
@@ -369,31 +348,6 @@ export default function ProductsPage() {
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Quantity *
-                        </label>
-                        <input
-                          type="number"
-                          required
-                          value={variant.inventory[0].quantity}
-                          onChange={(e) => updateVariant(index, 'quantity', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Location
-                        </label>
-                        <input
-                          type="text"
-                          value={variant.inventory[0].location}
-                          onChange={(e) => updateVariant(index, 'location', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -442,25 +396,26 @@ export default function ProductsPage() {
                   <p className="text-sm font-medium text-gray-700 mb-2">
                     Variants ({product.variants.length})
                   </p>
-                  {product.variants.map((variant) => (
-                    <div key={variant.id} className="text-xs text-gray-600 mb-1">
-                      <span className="font-mono">{variant.sku}</span> - ${variant.price}
-                      {variant.attributes && (
-                        <span className="ml-2 text-gray-500">
-                          {Object.entries(variant.attributes)
-                            .filter(([_, v]) => v)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join(', ')}
-                        </span>
-                      )}
-                      {variant.inventory_items &&
-                        variant.inventory_items.length > 0 && (
-                          <span className="ml-2 text-green-600">
-                            Stock: {variant.inventory_items[0].quantity}
+                  {product.variants.map((variant) => {
+                    const salesCount = variant.sales?.length || 0;
+
+                    return (
+                      <div key={variant.id} className="text-xs text-gray-600 mb-1">
+                        <span className="font-mono">{variant.sku}</span> - ${variant.price}
+                        {variant.attributes && (
+                          <span className="ml-2 text-gray-500">
+                            {Object.entries(variant.attributes)
+                              .filter(([_, v]) => v)
+                              .map(([k, v]) => `${k}: ${v}`)
+                              .join(', ')}
                           </span>
                         )}
-                    </div>
-                  ))}
+                        <span className="ml-2">
+                          <span className="text-blue-600">Sales: {salesCount}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

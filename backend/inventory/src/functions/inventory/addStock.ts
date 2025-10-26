@@ -5,7 +5,11 @@ import {
   createSuccessResponse,
   ApiError,
 } from '../../libs/errorHandler';
-import { AddStockRequest } from '../../libs/types';
+
+interface RecordSalesRequest {
+  variant_id: string;
+  quantity: number; // Number of sales to record
+}
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -15,7 +19,7 @@ export const handler = async (
       throw new ApiError(400, 'Request body is required');
     }
 
-    const requestBody: AddStockRequest = JSON.parse(event.body);
+    const requestBody: RecordSalesRequest = JSON.parse(event.body);
 
     // Validate required fields
     if (!requestBody.variant_id) {
@@ -24,80 +28,36 @@ export const handler = async (
     if (!requestBody.quantity || requestBody.quantity <= 0) {
       throw new ApiError(400, 'Quantity must be greater than 0');
     }
-    if (!requestBody.reason) {
-      throw new ApiError(400, 'Reason is required');
-    }
 
     const supabase = getSupabaseClient();
-    const userId = event.requestContext.authorizer?.lambda?.userId;
 
-    if (!userId) {
-      throw new ApiError(401, 'User ID not found in context');
-    }
-
-    const location = requestBody.location || 'Default';
-
-    // Start a transaction-like operation using RPC or multiple queries
-    // First, get or create the inventory item
-    const { data: existingInventory, error: fetchError } = await supabase
-      .from('inventory_items')
-      .select('*')
-      .eq('variant_id', requestBody.variant_id)
-      .eq('location', location)
+    // Verify variant exists
+    const { data: variant, error: variantError } = await supabase
+      .from('variants')
+      .select('id')
+      .eq('id', requestBody.variant_id)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError;
+    if (variantError || !variant) {
+      throw new ApiError(404, 'Variant not found');
     }
 
-    let updatedInventory;
+    // Create multiple sale records
+    const salesToInsert = Array.from({ length: requestBody.quantity }, () => ({
+      variant_id: requestBody.variant_id,
+    }));
 
-    if (existingInventory) {
-      // Update existing inventory
-      const { data, error } = await supabase
-        .from('inventory_items')
-        .update({
-          quantity: existingInventory.quantity + requestBody.quantity,
-        })
-        .eq('id', existingInventory.id)
-        .select()
-        .single();
+    const { data: sales, error } = await supabase
+      .from('sales')
+      .insert(salesToInsert)
+      .select();
 
-      if (error) throw error;
-      updatedInventory = data;
-    } else {
-      // Create new inventory item
-      const { data, error } = await supabase
-        .from('inventory_items')
-        .insert({
-          variant_id: requestBody.variant_id,
-          quantity: requestBody.quantity,
-          location: location,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      updatedInventory = data;
-    }
-
-    // Record the stock movement
-    const { data: stockMovement, error: movementError } = await supabase
-      .from('stock_movements')
-      .insert({
-        variant_id: requestBody.variant_id,
-        quantity_change: requestBody.quantity,
-        reason: requestBody.reason,
-        user_id: userId,
-      })
-      .select()
-      .single();
-
-    if (movementError) throw movementError;
+    if (error) throw error;
 
     return createSuccessResponse({
-      inventory: updatedInventory,
-      movement: stockMovement,
+      message: `Recorded ${requestBody.quantity} sales`,
+      sales_recorded: sales?.length || 0,
+      sales,
     });
   } catch (error) {
     return handleError(error);
