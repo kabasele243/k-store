@@ -53,8 +53,7 @@ export default function UpdateProductModal({
 }: UpdateProductModalProps) {
   const { session } = useAuth();
   const [selectedVariantId, setSelectedVariantId] = useState('');
-  const [price, setPrice] = useState('');
-  const [salesCount, setSalesCount] = useState('');
+  const [salesCount, setSalesCount] = useState('1');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -64,18 +63,13 @@ export default function UpdateProductModal({
     if (visible && variants.length > 0) {
       // Auto-select first variant
       setSelectedVariantId(variants[0].id);
-      setPrice(variants[0].price.toString());
-      setSalesCount('');
+      setSalesCount('1');
     }
   }, [visible, variants]);
 
   const handleVariantChange = (variantId: string) => {
     setSelectedVariantId(variantId);
-    const variant = variants.find(v => v.id === variantId);
-    if (variant) {
-      setPrice(variant.price.toString());
-      setSalesCount('');
-    }
+    setSalesCount('1');
     setErrors({});
   };
 
@@ -86,16 +80,8 @@ export default function UpdateProductModal({
       newErrors.variant = 'Please select a variant';
     }
 
-    if (price && (isNaN(parseFloat(price)) || parseFloat(price) < 0)) {
-      newErrors.price = 'Invalid price';
-    }
-
-    if (salesCount && (isNaN(parseInt(salesCount)) || parseInt(salesCount) <= 0)) {
-      newErrors.salesCount = 'Invalid sales count';
-    }
-
-    if (!price && !salesCount) {
-      newErrors.general = 'Please update price or record sales';
+    if (!salesCount || isNaN(parseInt(salesCount)) || parseInt(salesCount) <= 0) {
+      newErrors.salesCount = 'Please enter a valid quantity';
     }
 
     setErrors(newErrors);
@@ -108,36 +94,20 @@ export default function UpdateProductModal({
 
     setLoading(true);
     try {
-      // Update price if changed
-      if (price && selectedVariant && parseFloat(price) !== selectedVariant.price) {
-        await apiFetch(`/variants/${selectedVariantId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          token: session.access_token,
-          body: JSON.stringify({
-            price: parseFloat(price),
-          }),
-        });
-      }
+      // Record sale
+      await apiFetch(`/inventory/add-stock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        token: session.access_token,
+        body: JSON.stringify({
+          variant_id: selectedVariantId,
+          quantity: parseInt(salesCount),
+        }),
+      });
 
-      // Record sales if provided
-      if (salesCount) {
-        await apiFetch(`/inventory/add-stock`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          token: session.access_token,
-          body: JSON.stringify({
-            variant_id: selectedVariantId,
-            quantity: parseInt(salesCount),
-          }),
-        });
-      }
-
-      Alert.alert('Success', 'Product updated successfully');
+      Alert.alert('Success', `Recorded ${salesCount} sale(s) successfully`);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -162,17 +132,13 @@ export default function UpdateProductModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Update Product</Text>
+            <Text style={styles.modalTitle}>Record Sale</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
-            {errors.general && (
-              <Text style={styles.errorText}>{errors.general}</Text>
-            )}
-
             <View style={styles.section}>
               <Text style={styles.label}>Select Variant *</Text>
               <View style={styles.pickerWrapper}>
@@ -189,7 +155,7 @@ export default function UpdateProductModal({
                       styles.pickerOptionText,
                       selectedVariantId === variant.id && styles.pickerOptionTextSelected
                     ]}>
-                      {getVariantDisplayName(variant)}
+                      {getVariantDisplayName(variant)} - ${variant.price}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -198,45 +164,45 @@ export default function UpdateProductModal({
             </View>
 
             <View style={styles.section}>
-              <Input
-                label="Price"
-                value={price}
-                onChangeText={(text) => {
-                  setPrice(text);
-                  if (errors.price) {
-                    const newErrors = { ...errors };
-                    delete newErrors.price;
-                    setErrors(newErrors);
-                  }
-                }}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-                error={errors.price}
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Input
-                label="Record Sales"
-                value={salesCount}
-                onChangeText={(text) => {
-                  setSalesCount(text);
-                  if (errors.salesCount) {
-                    const newErrors = { ...errors };
-                    delete newErrors.salesCount;
-                    setErrors(newErrors);
-                  }
-                }}
-                placeholder="Number of items sold"
-                keyboardType="number-pad"
-                error={errors.salesCount}
-              />
+              <Text style={styles.label}>Quantity Sold *</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.quantityScroller}
+                contentContainerStyle={styles.quantityScrollerContent}
+              >
+                {Array.from({ length: 50 }, (_, i) => i + 1).map((qty) => (
+                  <TouchableOpacity
+                    key={qty}
+                    style={[
+                      styles.quantityChip,
+                      salesCount === qty.toString() && styles.quantityChipSelected
+                    ]}
+                    onPress={() => {
+                      setSalesCount(qty.toString());
+                      if (errors.salesCount) {
+                        const newErrors = { ...errors };
+                        delete newErrors.salesCount;
+                        setErrors(newErrors);
+                      }
+                    }}
+                  >
+                    <Text style={[
+                      styles.quantityChipText,
+                      salesCount === qty.toString() && styles.quantityChipTextSelected
+                    ]}>
+                      {qty}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {errors.salesCount && <Text style={styles.errorText}>{errors.salesCount}</Text>}
             </View>
 
             {selectedVariant && selectedVariant.sales && (
               <View style={styles.section}>
                 <Text style={styles.label}>
-                  Total Sales: {selectedVariant.sales.length}
+                  Total Sales for this variant: {selectedVariant.sales.length}
                 </Text>
               </View>
             )}
@@ -250,7 +216,7 @@ export default function UpdateProductModal({
               style={styles.footerButton}
             />
             <Button
-              title={loading ? 'Updating...' : 'Update'}
+              title={loading ? 'Recording...' : 'Record Sale'}
               onPress={handleSubmit}
               loading={loading}
               disabled={loading}
@@ -343,5 +309,36 @@ const styles = StyleSheet.create({
     ...Typography.label,
     color: Colors.status.danger,
     marginTop: Spacing.xs,
+  },
+  quantityScroller: {
+    marginBottom: Spacing.xs,
+  },
+  quantityScrollerContent: {
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  quantityChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 2,
+    borderColor: Colors.border.primary,
+    backgroundColor: Colors.surface.primary,
+    minWidth: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityChipSelected: {
+    borderColor: Colors.accent.primary,
+    backgroundColor: Colors.accent.primary,
+  },
+  quantityChipText: {
+    ...Typography.body,
+    fontWeight: '600',
+    fontSize: 18,
+    color: Colors.text.primary,
+  },
+  quantityChipTextSelected: {
+    color: Colors.background.primary,
   },
 });
