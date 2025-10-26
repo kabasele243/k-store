@@ -86,49 +86,12 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  # createProduct:
-  #   handler: src/functions/products/createProduct.handler
-  #   events:
-  #     - httpApi:
-  #         path: /products
-  #         method: post
-  #         # authorizer:
-  #         #   name: jwtAuthorizer
-
   getProduct:
     handler: src/functions/products/getProduct.handler
     events:
       - httpApi:
           path: /products/{productId}
           method: get
-          # authorizer:
-          #   name: jwtAuthorizer
-
-  updateProduct:
-    handler: src/functions/products/updateProduct.handler
-    events:
-      - httpApi:
-          path: /products/{productId}
-          method: put
-          # authorizer:
-          #   name: jwtAuthorizer
-
-  # Variant Endpoints
-  createVariant:
-    handler: src/functions/variants/createVariant.handler
-    events:
-      - httpApi:
-          path: /variants
-          method: post
-          # authorizer:
-          #   name: jwtAuthorizer
-
-  updateVariant:
-    handler: src/functions/variants/updateVariant.handler
-    events:
-      - httpApi:
-          path: /variants/{variantId}
-          method: put
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -160,35 +123,6 @@ functions:
           authorizer:
             name: jwtAuthorizer
 
-  # Business Type Endpoints
-  getBusinessTypes:
-    handler: src/functions/business-types/getBusinessTypes.handler
-    events:
-      - httpApi:
-          path: /business-types
-          method: get
-          # authorizer:
-          #   name: jwtAuthorizer
-
-  # Category Endpoints
-  getCategories:
-    handler: src/functions/categories/getCategories.handler
-    events:
-      - httpApi:
-          path: /categories
-          method: get
-          # authorizer:
-          #   name: jwtAuthorizer
-
-  # createCategory:
-  #   handler: src/functions/categories/createCategory.handler
-  #   events:
-  #     - httpApi:
-  #         path: /categories
-  #         method: post
-  #         authorizer:
-  #           name: jwtAuthorizer
-
   # Upload Endpoints
   generatePresignedUrls:
     handler: src/functions/uploads/generatePresignedUrls.handler
@@ -198,16 +132,6 @@ functions:
           method: post
           # authorizer:
           #   name: jwtAuthorizer
-
-  # Business Type Management
-  # createBusinessType:
-  #   handler: src/functions/business-types/createBusinessType.handler
-  #   events:
-  #     - httpApi:
-  #         path: /business-types
-  #         method: post
-  #         authorizer:
-  #           name: jwtAuthorizer
 
   # Business Endpoints
   getBusinesses:
@@ -219,15 +143,6 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  # createBusiness:
-  #   handler: src/functions/businesses/createBusiness.handler
-  #   events:
-  #     - httpApi:
-  #         path: /businesses
-  #         method: post
-  #         authorizer:
-  #           name: jwtAuthorizer
-
   getBusinessById:
     handler: src/functions/businesses/getBusinessById.handler
     events:
@@ -237,23 +152,6 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  updateBusiness:
-    handler: src/functions/businesses/updateBusiness.handler
-    events:
-      - httpApi:
-          path: /businesses/{id}
-          method: put
-          authorizer:
-            name: jwtAuthorizer
-
-  deleteBusiness:
-    handler: src/functions/businesses/deleteBusiness.handler
-    events:
-      - httpApi:
-          path: /businesses/{id}
-          method: delete
-          authorizer:
-            name: jwtAuthorizer
 
 resources:
   Resources:
