@@ -4,7 +4,13 @@ import {
   createSuccessResponse,
   ApiError,
 } from '../../libs/errorHandler';
-import { updateBusiness, UpdateBusinessRequest } from '../../services/businessService';
+import { BusinessService, UpdateBusinessRequest } from '../../services/businessService';
+import { SupabaseBusinessRepository } from '../../infrastructure/supabase/SupabaseBusinessRepository';
+import { getSupabaseClient } from '../../libs/supabaseClient';
+
+const supabase = getSupabaseClient();
+const businessRepository = new SupabaseBusinessRepository(supabase);
+const businessService = new BusinessService(businessRepository);
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -21,7 +27,7 @@ export const handler = async (
     }
 
     const requestBody: UpdateBusinessRequest = JSON.parse(event.body);
-    const business = await updateBusiness(businessId, requestBody);
+    const business = await businessService.updateBusiness(businessId, requestBody);
     return createSuccessResponse(business);
   } catch (error) {
     return handleError(error);

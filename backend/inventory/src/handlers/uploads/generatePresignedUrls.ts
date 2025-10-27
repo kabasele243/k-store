@@ -3,8 +3,14 @@ import {
   handleError,
   createSuccessResponse,
   ApiError,
-} from '../../../libs/errorHandler';
-import { generatePresignedUrls, GeneratePresignedUrlsRequest } from '../services/uploadService';
+} from '../../libs/errorHandler';
+import { UploadService } from '../../services/uploadService';
+import { SupabaseUploadRepository } from '../../infrastructure/supabase/SupabaseUploadRepository';
+import { getSupabaseClient } from '../../libs/supabaseClient';
+
+const supabase = getSupabaseClient();
+const uploadRepository = new SupabaseUploadRepository(supabase);
+const uploadService = new UploadService(uploadRepository);
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -14,8 +20,8 @@ export const handler = async (
       throw new ApiError(400, 'Request body is required');
     }
 
-    const requestBody: GeneratePresignedUrlsRequest = JSON.parse(event.body);
-    const result = await generatePresignedUrls(requestBody);
+    const requestBody = JSON.parse(event.body);
+    const result = await uploadService.generatePresignedUrls(requestBody);
     return createSuccessResponse(result);
   } catch (error) {
     console.error('Error in generatePresignedUrls:', error);

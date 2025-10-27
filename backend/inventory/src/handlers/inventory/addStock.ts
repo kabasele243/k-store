@@ -4,7 +4,13 @@ import {
   createSuccessResponse,
   ApiError,
 } from '../../libs/errorHandler';
-import { recordSales } from '../../services/inventoryService';
+import { InventoryService } from '../../services/inventoryService';
+import { SupabaseInventoryRepository } from '../../infrastructure/supabase/SupabaseInventoryRepository';
+import { getSupabaseClient } from '../../libs/supabaseClient';
+
+const supabase = getSupabaseClient();
+const inventoryRepository = new SupabaseInventoryRepository(supabase);
+const inventoryService = new InventoryService(inventoryRepository);
 
 interface RecordSalesRequest {
   variant_id: string;
@@ -20,7 +26,7 @@ export const handler = async (
     }
 
     const requestBody: RecordSalesRequest = JSON.parse(event.body);
-    const result = await recordSales(requestBody);
+    const result = await inventoryService.recordSales(requestBody);
     return createSuccessResponse(result);
   } catch (error) {
     return handleError(error);

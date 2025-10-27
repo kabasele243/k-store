@@ -78,7 +78,7 @@ functions:
 
   # Product Endpoints
   getProducts:
-    handler: src/functions/products/getProducts.handler
+    handler: src/handlers/products/getProducts.handler
     events:
       - httpApi:
           path: /products
@@ -87,7 +87,7 @@ functions:
           #   name: jwtAuthorizer
 
   getProduct:
-    handler: src/functions/products/getProduct.handler
+    handler: src/handlers/products/getProduct.handler
     events:
       - httpApi:
           path: /products/{productId}
@@ -97,7 +97,7 @@ functions:
 
   # Inventory Endpoints
   addStock:
-    handler: src/functions/inventory/addStock.handler
+    handler: src/handlers/inventory/addStock.handler
     events:
       - httpApi:
           path: /inventory/add-stock
@@ -106,7 +106,7 @@ functions:
             name: jwtAuthorizer
 
   removeStock:
-    handler: src/functions/inventory/removeStock.handler
+    handler: src/handlers/inventory/removeStock.handler
     events:
       - httpApi:
           path: /inventory/remove-stock
@@ -115,7 +115,7 @@ functions:
             name: jwtAuthorizer
 
   getLowStock:
-    handler: src/functions/inventory/getLowStock.handler
+    handler: src/handlers/inventory/getLowStock.handler
     events:
       - httpApi:
           path: /inventory/low-stock
@@ -125,7 +125,7 @@ functions:
 
   # Upload Endpoints
   generatePresignedUrls:
-    handler: src/functions/uploads/generatePresignedUrls.handler
+    handler: src/handlers/uploads/generatePresignedUrls.handler
     events:
       - httpApi:
           path: /uploads/presigned-urls
@@ -135,7 +135,7 @@ functions:
 
   # Business Endpoints
   getBusinesses:
-    handler: src/functions/businesses/getBusinesses.handler
+    handler: src/handlers/businesses/getBusinesses.handler
     events:
       - httpApi:
           path: /businesses
@@ -144,7 +144,7 @@ functions:
           #   name: jwtAuthorizer
 
   getBusinessById:
-    handler: src/functions/businesses/getBusinessById.handler
+    handler: src/handlers/businesses/getBusinessById.handler
     events:
       - httpApi:
           path: /businesses/{id}

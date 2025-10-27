@@ -3,14 +3,20 @@ import {
   handleError,
   createSuccessResponse,
 } from '../../libs/errorHandler';
-import { getBusinessById } from '../../services/businessService';
+import { BusinessService } from '../../services/businessService';
+import { SupabaseBusinessRepository } from '../../infrastructure/supabase/SupabaseBusinessRepository';
+import { getSupabaseClient } from '../../libs/supabaseClient';
+
+const supabase = getSupabaseClient();
+const businessRepository = new SupabaseBusinessRepository(supabase);
+const businessService = new BusinessService(businessRepository);
 
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     const businessId = event.pathParameters?.id!;
-    const business = await getBusinessById(businessId);
+    const business = await businessService.getBusinessById(businessId);
     return createSuccessResponse(business);
   } catch (error) {
     return handleError(error);
