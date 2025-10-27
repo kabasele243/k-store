@@ -125,6 +125,7 @@ describe('ProductService', () => {
   });
 
   describe('updateProduct', () => {
+
     const validProductId = 'product-123';
 
     it('should throw 400 when product ID is missing', async () => {
