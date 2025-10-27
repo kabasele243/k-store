@@ -1,0 +1,35 @@
+name: Inventory Unit Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/inventory/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/inventory/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend/inventory
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/inventory/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
