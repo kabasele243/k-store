@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../libs/supabaseClient';
 import { ApiError } from '../libs/errorHandler';
+import { IInventoryRepository } from '../repositories/IInventoryRepository';
 
 interface RecordSalesRequest {
   variant_id: string;
@@ -10,99 +10,54 @@ interface RecordSaleRequest {
   variant_id: string;
 }
 
-export const recordSales = async (request: RecordSalesRequest) => {
-  // Validate required fields
-  if (!request.variant_id) {
-    throw new ApiError(400, 'Variant ID is required');
-  }
-  if (!request.quantity || request.quantity <= 0) {
-    throw new ApiError(400, 'Quantity must be greater than 0');
-  }
+export class InventoryService {
+  constructor(private readonly inventoryRepository: IInventoryRepository) {}
 
-  const supabase = getSupabaseClient();
+  async recordSales(request: RecordSalesRequest) {
+    if (!request.variant_id) {
+      throw new ApiError(400, 'Variant ID is required');
+    }
+    if (!request.quantity || request.quantity <= 0) {
+      throw new ApiError(400, 'Quantity must be greater than 0');
+    }
 
-  // Verify variant exists
-  const { data: variant, error: variantError } = await supabase
-    .from('variants')
-    .select('id')
-    .eq('id', request.variant_id)
-    .single();
-
-  if (variantError || !variant) {
-    throw new ApiError(404, 'Variant not found');
-  }
-
-  // Create multiple sale records
-  const salesToInsert = Array.from({ length: request.quantity }, () => ({
-    variant_id: request.variant_id,
-  }));
-
-  const { data: sales, error } = await supabase
-    .from('sales')
-    .insert(salesToInsert)
-    .select();
-
-  if (error) throw error;
-
-  return {
-    message: `Recorded ${request.quantity} sales`,
-    sales_recorded: sales?.length || 0,
-    sales,
-  };
-};
-
-export const recordSale = async (request: RecordSaleRequest) => {
-  // Validate required fields
-  if (!request.variant_id) {
-    throw new ApiError(400, 'Variant ID is required');
-  }
-
-  const supabase = getSupabaseClient();
-
-  // Verify variant exists
-  const { error: variantError } = await supabase
-    .from('variants')
-    .select('id')
-    .eq('id', request.variant_id)
-    .single();
-
-  if (variantError) {
-    if (variantError.code === 'PGRST116') {
+    const exists = await this.inventoryRepository.variantExists(request.variant_id);
+    if (!exists) {
       throw new ApiError(404, 'Variant not found');
     }
-    throw variantError;
+
+    const sales = await this.inventoryRepository.recordSales(request.variant_id, request.quantity);
+
+    return {
+      message: `Recorded ${request.quantity} sales`,
+      sales_recorded: sales.length,
+      sales,
+    };
   }
 
-  // Record the sale
-  const { data: sale, error: saleError } = await supabase
-    .from('sales')
-    .insert({
-      variant_id: request.variant_id,
-    })
-    .select()
-    .single();
+  async recordSale(request: RecordSaleRequest) {
+    if (!request.variant_id) {
+      throw new ApiError(400, 'Variant ID is required');
+    }
 
-  if (saleError) throw saleError;
+    const exists = await this.inventoryRepository.variantExists(request.variant_id);
+    if (!exists) {
+      throw new ApiError(404, 'Variant not found');
+    }
 
-  return {
-    message: 'Sale recorded successfully',
-    sale,
-  };
-};
+    const sale = await this.inventoryRepository.recordSale(request.variant_id);
 
-export const getLowStock = async () => {
-  const supabase = getSupabaseClient();
-
-  // Get sales count per variant
-  const { data: salesCounts, error } = await supabase
-    .rpc('get_sales_count_per_variant');
-
-  if (error) {
-    throw error;
+    return {
+      message: 'Sale recorded successfully',
+      sale,
+    };
   }
 
-  return {
-    count: salesCounts?.length || 0,
-    variants: salesCounts || [],
-  };
-};
+  async getLowStock() {
+    const salesCounts = await this.inventoryRepository.getSalesCountPerVariant();
+    return {
+      count: salesCounts.length,
+      variants: salesCounts,
+    };
+  }
+}

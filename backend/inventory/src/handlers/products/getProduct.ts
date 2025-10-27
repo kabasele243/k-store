@@ -11,7 +11,7 @@ export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   try {
-    // Dependency injection
+
     const supabase = getSupabaseClient();
     const productRepository = new SupabaseProductRepository(supabase);
     const productService = new ProductService(productRepository);

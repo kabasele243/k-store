@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../libs/supabaseClient';
 import { ApiError } from '../libs/errorHandler';
+import { IBusinessRepository } from '../repositories/IBusinessRepository';
 
 export interface UpdateBusinessRequest {
   name?: string;
@@ -13,120 +13,56 @@ export interface UpdateBusinessRequest {
   country?: string;
 }
 
-export const getBusinessById = async (businessId: string) => {
-  if (!businessId) {
-    throw new ApiError(400, 'Business ID is required');
+export class BusinessService {
+  constructor(private readonly businessRepository: IBusinessRepository) {}
+
+  async getBusinessById(businessId: string) {
+    if (!businessId) {
+      throw new ApiError(400, 'Business ID is required');
+    }
+
+    const business = await this.businessRepository.findById(businessId);
+
+    if (!business) {
+      throw new ApiError(404, 'Business not found');
+    }
+
+    return business;
   }
 
-  const supabase = getSupabaseClient();
-
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .select('*, business_types(id, name, description)')
-    .eq('id', businessId)
-    .single();
-
-  if (error || !business) {
-    throw new ApiError(404, 'Business not found');
+  async getBusinesses(businessTypeId?: string) {
+    return await this.businessRepository.findAll(businessTypeId);
   }
 
-  return business;
-};
+  async updateBusiness(businessId: string, data: UpdateBusinessRequest) {
+    if (!businessId) {
+      throw new ApiError(400, 'Business ID is required');
+    }
 
-export const getBusinesses = async (businessTypeId?: string) => {
-  const supabase = getSupabaseClient();
+    // Verify business exists
+    const exists = await this.businessRepository.exists(businessId);
+    if (!exists) {
+      throw new ApiError(404, 'Business not found');
+    }
 
-  let query = supabase
-    .from('businesses')
-    .select('*, business_types(id, name, description)')
-    .order('name', { ascending: true });
-
-  // Filter by business type if provided
-  if (businessTypeId) {
-    query = query.eq('business_type_id', businessTypeId);
+    return await this.businessRepository.update(businessId, data);
   }
 
-  const { data: businesses, error } = await query;
+  async deleteBusiness(businessId: string) {
+    if (!businessId) {
+      throw new ApiError(400, 'Business ID is required');
+    }
 
-  if (error) throw error;
+    // Check if business has users
+    const hasUsers = await this.businessRepository.hasUsers(businessId);
+    if (hasUsers) {
+      throw new ApiError(
+        400,
+        'Cannot delete business with assigned users. Please reassign or remove users first.'
+      );
+    }
 
-  return businesses;
-};
-
-export const updateBusiness = async (
-  businessId: string,
-  data: UpdateBusinessRequest
-) => {
-  if (!businessId) {
-    throw new ApiError(400, 'Business ID is required');
+    await this.businessRepository.delete(businessId);
+    return { message: 'Business deleted successfully' };
   }
-
-  const supabase = getSupabaseClient();
-
-  // Verify business exists
-  const { data: existingBusiness, error: fetchError } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('id', businessId)
-    .single();
-
-  if (fetchError || !existingBusiness) {
-    throw new ApiError(404, 'Business not found');
-  }
-
-  // Update the business
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .update({
-      name: data.name,
-      description: data.description,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      state: data.state,
-      zip_code: data.zip_code,
-      country: data.country,
-    })
-    .eq('id', businessId)
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  return business;
-};
-
-export const deleteBusiness = async (businessId: string) => {
-  if (!businessId) {
-    throw new ApiError(400, 'Business ID is required');
-  }
-
-  const supabase = getSupabaseClient();
-
-  // Check if business has users
-  const { data: users, error: usersError } = await supabase
-    .from('user_profiles')
-    .select('id')
-    .eq('business_id', businessId)
-    .limit(1);
-
-  if (usersError) throw usersError;
-
-  if (users && users.length > 0) {
-    throw new ApiError(
-      400,
-      'Cannot delete business with assigned users. Please reassign or remove users first.'
-    );
-  }
-
-  // Delete the business
-  const { error } = await supabase
-    .from('businesses')
-    .delete()
-    .eq('id', businessId);
-
-  if (error) throw error;
-
-  return { message: 'Business deleted successfully' };
-};
+}
