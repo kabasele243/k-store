@@ -1,5 +1,5 @@
-import { ApiError } from '../../../libs/errorHandler';
-import { generateMultiplePresignedUrls } from '../../../libs/s3Client';
+import { ApiError } from '../libs/errorHandler';
+import { generateMultiplePresignedUrls } from '../libs/s3Client';
 
 export interface GeneratePresignedUrlsRequest {
   folder: string;

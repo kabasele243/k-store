@@ -3,11 +3,12 @@ import {
   handleError,
   createSuccessResponse,
   ApiError,
-} from '../../../libs/errorHandler';
-import { recordSale } from '../services/inventoryService';
+} from '../../libs/errorHandler';
+import { recordSales } from '../../services/inventoryService';
 
-interface RecordSaleRequest {
+interface RecordSalesRequest {
   variant_id: string;
+  quantity: number;
 }
 
 export const handler = async (
@@ -18,8 +19,8 @@ export const handler = async (
       throw new ApiError(400, 'Request body is required');
     }
 
-    const requestBody: RecordSaleRequest = JSON.parse(event.body);
-    const result = await recordSale(requestBody);
+    const requestBody: RecordSalesRequest = JSON.parse(event.body);
+    const result = await recordSales(requestBody);
     return createSuccessResponse(result);
   } catch (error) {
     return handleError(error);

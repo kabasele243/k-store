@@ -3,8 +3,8 @@ import {
   handleError,
   createSuccessResponse,
   ApiError,
-} from '../../../libs/errorHandler';
-import { deleteBusiness } from '../services/businessService';
+} from '../../libs/errorHandler';
+import { updateBusiness, UpdateBusinessRequest } from '../../services/businessService';
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -16,8 +16,13 @@ export const handler = async (
       throw new ApiError(400, 'Business ID is required');
     }
 
-    const result = await deleteBusiness(businessId);
-    return createSuccessResponse(result);
+    if (!event.body) {
+      throw new ApiError(400, 'Request body is required');
+    }
+
+    const requestBody: UpdateBusinessRequest = JSON.parse(event.body);
+    const business = await updateBusiness(businessId, requestBody);
+    return createSuccessResponse(business);
   } catch (error) {
     return handleError(error);
   }

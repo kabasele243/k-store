@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../../../libs/supabaseClient';
-import { ApiError } from '../../../libs/errorHandler';
+import { getSupabaseClient } from '../libs/supabaseClient';
+import { ApiError } from '../libs/errorHandler';
 
 export interface UpdateBusinessRequest {
   name?: string;

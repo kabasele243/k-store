@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { handleError, createSuccessResponse } from '../../../libs/errorHandler';
-import { getBusinesses } from '../services/businessService';
+import { handleError, createSuccessResponse } from '../../libs/errorHandler';
+import { getBusinesses } from '../../services/businessService';
 
 export const handler = async (
   event: APIGatewayProxyEventV2
