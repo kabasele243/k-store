@@ -7,8 +7,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductStore } from '@/stores/useProductStore';
 import Button from '@/components/ui/Button';
@@ -82,38 +81,46 @@ export default function CategoryProductsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Button
-          title="← Back"
-          onPress={() => router.back()}
-          variant="outline"
-          style={styles.backButton}
-        />
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{name || 'Category'}</Text>
-          <Text style={styles.productCount}>{filteredProducts.length} products</Text>
-        </View>
-      </View>
-
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No products in this category</Text>
-            <Text style={styles.emptySubtext}>
-              Add products to this category to see them here
-            </Text>
-          </View>
-        }
+    <>
+      <Stack.Screen
+        options={{
+          title: name,
+          headerShown: false,
+        }}
       />
-    </View>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Button
+            title="← Back"
+            onPress={() => router.back()}
+            variant="outline"
+            style={styles.backButton}
+          />
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{name || 'Category'}</Text>
+            <Text style={styles.productCount}>{filteredProducts.length} products</Text>
+          </View>
+        </View>
+
+        <FlatList
+          data={filteredProducts}
+          renderItem={renderProduct}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No products in this category</Text>
+              <Text style={styles.emptySubtext}>
+                Add products to this category to see them here
+              </Text>
+            </View>
+          }
+        />
+      </View>
+    </>
   );
 }
 
