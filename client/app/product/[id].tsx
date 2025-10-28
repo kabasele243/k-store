@@ -260,21 +260,6 @@ const styles = StyleSheet.create({
     ...Typography.bodyPrimary,
     fontWeight: '500',
   },
-  stockInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.background.primary,
-  },
   variantCard: {
     marginBottom: Spacing.md,
     padding: Spacing.md,
@@ -289,59 +274,11 @@ const styles = StyleSheet.create({
     ...Typography.bodyPrimary,
     fontWeight: '600',
   },
-  variantStock: {
-    ...Typography.bodySecondary,
-    color: Colors.status.success,
-    fontWeight: '600',
-  },
   variantPrice: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
-  },
-  locationsList: {
-    marginTop: Spacing.sm,
-    gap: Spacing.xs,
-  },
-  locationItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.xs,
-  },
-  locationName: {
-    ...Typography.bodySecondary,
-  },
-  locationQty: {
-    ...Typography.bodySecondary,
-    fontWeight: '500',
-  },
-  locationCard: {
-    marginBottom: Spacing.md,
-    padding: Spacing.md,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 2,
-  },
-  locationSubtitle: {
-    ...Typography.label,
-    color: Colors.text.secondary,
-  },
-  locationTotal: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text.primary,
   },
   emptyState: {
     alignItems: 'center',

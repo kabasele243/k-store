@@ -38,25 +38,6 @@ export default function CategoryProductsScreen() {
     }
   };
 
-  const getTotalStock = (product: any) => {
-    let total = 0;
-    product.variants?.forEach((variant: any) => {
-      variant.inventory?.forEach((inv: any) => {
-        total += inv.quantity;
-      });
-    });
-    return total;
-  };
-
-  const getStockStatus = (total: number) => {
-    if (total === 0) {
-      return { color: Colors.status.danger, label: 'Out of Stock' };
-    }
-    if (total < 10) {
-      return { color: Colors.status.warning, label: 'Low Stock' };
-    }
-    return { color: Colors.status.success, label: 'In Stock' };
-  };
 
   // Filter products by category
   const filteredProducts = useMemo(() => {
@@ -92,14 +73,9 @@ export default function CategoryProductsScreen() {
   };
 
   const renderProduct = ({ item }: { item: any }) => {
-    const totalStock = getTotalStock(item);
-    const stockStatus = getStockStatus(totalStock);
-
     return (
       <SwipeableProductCard
         product={item}
-        totalStock={totalStock}
-        stockStatus={stockStatus}
         onDelete={handleDeleteProduct}
       />
     );

@@ -2,24 +2,17 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
-import { AlertCircle, Zap, Check, Trash2, Package } from 'lucide-react-native';
+import { Trash2, Package } from 'lucide-react-native';
 import Card from './Card';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 
 interface SwipeableProductCardProps {
   product: any;
-  totalStock: number;
-  stockStatus: {
-    color: string;
-    label: string;
-  };
   onDelete?: (id: string) => void;
 }
 
 export function SwipeableProductCard({
   product,
-  totalStock,
-  stockStatus,
   onDelete,
 }: SwipeableProductCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
@@ -38,16 +31,6 @@ export function SwipeableProductCard({
         },
       ]
     );
-  };
-
-  const getStockIcon = () => {
-    if (totalStock === 0) {
-      return <AlertCircle size={14} color={Colors.background.primary} />;
-    }
-    if (totalStock < 10) {
-      return <Zap size={14} color={Colors.background.primary} />;
-    }
-    return <Check size={14} color={Colors.background.primary} />;
   };
 
   const renderRightActions = () => {
@@ -91,10 +74,6 @@ export function SwipeableProductCard({
                 <Text style={styles.productName} numberOfLines={2}>
                   {product.name}
                 </Text>
-                <View style={[styles.stockBadge, { backgroundColor: stockStatus.color }]}>
-                  {getStockIcon()}
-                  <Text style={styles.stockBadgeText}>{totalStock}</Text>
-                </View>
               </View>
               <View style={styles.productMeta}>
                 {product.brand && <Text style={styles.productBrand}>{product.brand}</Text>}
@@ -107,9 +86,6 @@ export function SwipeableProductCard({
               <View style={styles.productFooter}>
                 <Text style={styles.variantCount}>
                   {product.variants?.length || 0} variant{product.variants?.length !== 1 ? 's' : ''}
-                </Text>
-                <Text style={[styles.stockStatus, { color: stockStatus.color }]}>
-                  {stockStatus.label}
                 </Text>
               </View>
             </View>
@@ -163,21 +139,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     lineHeight: 22,
   },
-  stockBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 48,
-    justifyContent: 'center',
-  },
-  stockBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.background.primary,
-  },
   productMeta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,12 +166,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.text.secondary,
     fontWeight: '500',
-  },
-  stockStatus: {
-    ...Typography.label,
-    fontWeight: '600',
-    fontSize: 13,
-    letterSpacing: 0.2,
   },
   actionsContainer: {
     flexDirection: 'row',
