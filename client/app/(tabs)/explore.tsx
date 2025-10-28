@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
-import { AlertCircle, Zap, CheckCircle } from 'lucide-react-native';
+import { CheckCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductStore } from '@/stores/useProductStore';
 import Card from '@/components/ui/Card';
@@ -26,38 +26,11 @@ export default function AnalyticsScreen() {
 
   const analytics = useMemo(() => {
     const totalProducts = products.length;
-    let totalStock = 0;
-    let lowStockCount = 0;
-    let outOfStockCount = 0;
-    const lowStockProducts: any[] = [];
-    const outOfStockProducts: any[] = [];
-
-    products.forEach(product => {
-      let productStock = 0;
-      product.variants?.forEach((variant: any) => {
-        variant.inventory?.forEach((inv: any) => {
-          productStock += inv.quantity;
-        });
-      });
-
-      totalStock += productStock;
-
-      if (productStock === 0) {
-        outOfStockCount++;
-        outOfStockProducts.push({ ...product, stock: productStock });
-      } else if (productStock < 10) {
-        lowStockCount++;
-        lowStockProducts.push({ ...product, stock: productStock });
-      }
-    });
+    const totalVariants = products.reduce((sum, product) => sum + (product.variants?.length || 0), 0);
 
     return {
       totalProducts,
-      totalStock,
-      lowStockCount,
-      outOfStockCount,
-      lowStockProducts: lowStockProducts.slice(0, 5),
-      outOfStockProducts: outOfStockProducts.slice(0, 5),
+      totalVariants,
     };
   }, [products]);
 
@@ -65,7 +38,7 @@ export default function AnalyticsScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Analytics</Text>
-        <Text style={styles.subtitle}>Inventory insights at a glance</Text>
+        <Text style={styles.subtitle}>Product catalog overview</Text>
       </View>
 
       <View style={styles.statsGrid}>
@@ -75,94 +48,37 @@ export default function AnalyticsScreen() {
         </Card>
 
         <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{analytics.totalStock}</Text>
-          <Text style={styles.statLabel}>Total Units</Text>
-        </Card>
-
-        <Card style={[styles.statCard, styles.warningCard]}>
-          <Text style={[styles.statValue, { color: Colors.status.warning }]}>
-            {analytics.lowStockCount}
-          </Text>
-          <Text style={styles.statLabel}>Low Stock</Text>
-        </Card>
-
-        <Card style={[styles.statCard, styles.dangerCard]}>
-          <Text style={[styles.statValue, { color: Colors.status.danger }]}>
-            {analytics.outOfStockCount}
-          </Text>
-          <Text style={styles.statLabel}>Out of Stock</Text>
+          <Text style={styles.statValue}>{analytics.totalVariants}</Text>
+          <Text style={styles.statLabel}>Total Variants</Text>
         </Card>
       </View>
 
-      {analytics.outOfStockProducts.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <AlertCircle size={20} color={Colors.status.danger} />
-            <Text style={styles.sectionTitle}>Out of Stock</Text>
-          </View>
-          {analytics.outOfStockProducts.map((product, index) => (
-            <TouchableOpacity
-              key={product.id}
-              onPress={() => router.push(`/product/${product.id}`)}
-            >
-              <Card style={styles.alertCard}>
-                <View style={styles.alertContent}>
-                  <View style={styles.alertInfo}>
-                    <Text style={styles.alertProductName}>{product.name}</Text>
-                    {product.brand && (
-                      <Text style={styles.alertProductBrand}>{product.brand}</Text>
-                    )}
-                  </View>
-                  <View style={[styles.alertBadge, { backgroundColor: Colors.status.danger }]}>
-                    <Text style={styles.alertBadgeText}>0</Text>
-                  </View>
-                </View>
-              </Card>
-            </TouchableOpacity>
-          ))}
+      <View style={styles.section}>
+        <View style={styles.sectionTitleContainer}>
+          <CheckCircle size={20} color={Colors.accent.primary} />
+          <Text style={styles.sectionTitle}>All Products</Text>
         </View>
-      )}
-
-      {analytics.lowStockProducts.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionTitleContainer}>
-            <Zap size={20} color={Colors.status.warning} />
-            <Text style={styles.sectionTitle}>Low Stock Alerts</Text>
-          </View>
-          {analytics.lowStockProducts.map((product, index) => (
-            <TouchableOpacity
-              key={product.id}
-              onPress={() => router.push(`/product/${product.id}`)}
-            >
-              <Card style={styles.alertCard}>
-                <View style={styles.alertContent}>
-                  <View style={styles.alertInfo}>
-                    <Text style={styles.alertProductName}>{product.name}</Text>
-                    {product.brand && (
-                      <Text style={styles.alertProductBrand}>{product.brand}</Text>
-                    )}
-                  </View>
-                  <View style={[styles.alertBadge, { backgroundColor: Colors.status.warning }]}>
-                    <Text style={styles.alertBadgeText}>{product.stock}</Text>
-                  </View>
+        {products.map((product) => (
+          <TouchableOpacity
+            key={product.id}
+            onPress={() => router.push(`/product/${product.id}`)}
+          >
+            <Card style={styles.alertCard}>
+              <View style={styles.alertContent}>
+                <View style={styles.alertInfo}>
+                  <Text style={styles.alertProductName}>{product.name}</Text>
+                  {product.brand && (
+                    <Text style={styles.alertProductBrand}>{product.brand}</Text>
+                  )}
                 </View>
-              </Card>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {analytics.lowStockCount === 0 && analytics.outOfStockCount === 0 && (
-        <Card style={styles.emptyCard}>
-          <View style={styles.emptyIconContainer}>
-            <CheckCircle size={48} color={Colors.status.success} />
-          </View>
-          <Text style={styles.emptyTitle}>All Good!</Text>
-          <Text style={styles.emptyText}>
-            No stock alerts at the moment. Your inventory is healthy.
-          </Text>
-        </Card>
-      )}
+                <View style={[styles.alertBadge, { backgroundColor: Colors.accent.primary }]}>
+                  <Text style={styles.alertBadgeText}>{product.variants?.length || 0}</Text>
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        ))}
+      </View>
     </ScrollView>
   );
 }

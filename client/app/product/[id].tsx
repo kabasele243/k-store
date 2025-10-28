@@ -16,7 +16,7 @@ import UpdateProductModal from '@/components/ui/UpdateProductModal';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { apiFetch } from '@/utils/api';
 
-type TabType = 'overview' | 'variants' | 'inventory';
+type TabType = 'overview' | 'variants';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,31 +47,7 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const getTotalStock = () => {
-    if (!product) return 0;
-    let total = 0;
-    product.variants?.forEach((variant: any) => {
-      variant.inventory?.forEach((inv: any) => {
-        total += inv.quantity;
-      });
-    });
-    return total;
-  };
-
-  const getStockStatus = (total: number) => {
-    if (total === 0) {
-      return { color: Colors.status.danger, label: 'Out of Stock' };
-    }
-    if (total < 10) {
-      return { color: Colors.status.warning, label: 'Low Stock' };
-    }
-    return { color: Colors.status.success, label: 'In Stock' };
-  };
-
   const renderOverview = () => {
-    const totalStock = getTotalStock();
-    const stockStatus = getStockStatus(totalStock);
-
     return (
       <View style={styles.tabContent}>
         <Card style={styles.infoCard}>
@@ -94,17 +70,6 @@ export default function ProductDetailScreen() {
             </View>
           )}
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Total Stock</Text>
-            <View style={styles.stockInfo}>
-              <Text style={[styles.infoValue, { color: stockStatus.color, fontWeight: '700' }]}>
-                {totalStock} units
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: stockStatus.color }]}>
-                <Text style={styles.statusText}>{stockStatus.label}</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Variants</Text>
             <Text style={styles.infoValue}>{product.variants?.length || 0}</Text>
           </View>
@@ -125,31 +90,13 @@ export default function ProductDetailScreen() {
     return (
       <View style={styles.tabContent}>
         {product.variants.map((variant: any, index: number) => {
-          const variantStock = variant.inventory?.reduce(
-            (sum: number, inv: any) => sum + inv.quantity,
-            0
-          ) || 0;
-
           return (
             <Card key={variant.id} style={styles.variantCard}>
               <View style={styles.variantHeader}>
                 <Text style={styles.variantSku}>SKU: {variant.sku}</Text>
-                <Text style={styles.variantStock}>{variantStock} units</Text>
               </View>
               {variant.price && (
                 <Text style={styles.variantPrice}>${variant.price.toFixed(2)}</Text>
-              )}
-              {variant.inventory && variant.inventory.length > 0 && (
-                <View style={styles.locationsList}>
-                  {variant.inventory.map((inv: any, idx: number) => (
-                    <View key={idx} style={styles.locationItem}>
-                      <Text style={styles.locationName}>
-                        {inv.location || 'Default Location'}
-                      </Text>
-                      <Text style={styles.locationQty}>{inv.quantity} units</Text>
-                    </View>
-                  ))}
-                </View>
               )}
             </Card>
           );
@@ -158,44 +105,6 @@ export default function ProductDetailScreen() {
     );
   };
 
-  const renderInventory = () => {
-    const inventoryByLocation: { [key: string]: number } = {};
-
-    product.variants?.forEach((variant: any) => {
-      variant.inventory?.forEach((inv: any) => {
-        const location = inv.location || 'Default Location';
-        inventoryByLocation[location] = (inventoryByLocation[location] || 0) + inv.quantity;
-      });
-    });
-
-    const locations = Object.entries(inventoryByLocation);
-
-    if (locations.length === 0) {
-      return (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No inventory data</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.tabContent}>
-        {locations.map(([location, quantity]) => (
-          <Card key={location} style={styles.locationCard}>
-            <View style={styles.locationRow}>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationTitle}>{location}</Text>
-                <Text style={styles.locationSubtitle}>
-                  {product.variants?.length || 0} variant(s)
-                </Text>
-              </View>
-              <Text style={styles.locationTotal}>{quantity} units</Text>
-            </View>
-          </Card>
-        ))}
-      </View>
-    );
-  };
 
   if (loading) {
     return (
@@ -244,22 +153,12 @@ export default function ProductDetailScreen() {
                 Variants
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'inventory' && styles.activeTab]}
-              onPress={() => setActiveTab('inventory')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.tabText, activeTab === 'inventory' && styles.activeTabText]}>
-                Inventory
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
 
         <ScrollView style={styles.scrollView}>
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'variants' && renderVariants()}
-          {activeTab === 'inventory' && renderInventory()}
         </ScrollView>
 
         <View style={styles.footer}>

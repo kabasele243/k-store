@@ -5,10 +5,6 @@ interface Variant {
   id: string;
   sku: string;
   price?: number;
-  inventory?: Array<{
-    quantity: number;
-    location?: string;
-  }>;
 }
 
 interface Product {

@@ -18,7 +18,7 @@ import Card from '@/components/ui/Card';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { apiFetch } from '@/utils/api';
 
-type TabType = 'details' | 'variants' | 'inventory';
+type TabType = 'details' | 'variants';
 
 interface Category {
   id: string;
@@ -33,12 +33,6 @@ interface Variant {
   tempId: string;
 }
 
-interface InventoryItem {
-  variantIndex: number;
-  location: string;
-  quantity: string;
-  tempId: string;
-}
 
 export default function AddProductScreen() {
   const { session } = useAuth();
@@ -61,11 +55,6 @@ export default function AddProductScreen() {
       setVariants([{ sku: generateSKU(), price: '', tempId: '1' }]);
     }
   }, []);
-
-  // Inventory
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    { variantIndex: 0, location: '', quantity: '', tempId: '1' }
-  ]);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -116,18 +105,6 @@ export default function AddProductScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateInventory = () => {
-    const newErrors: { [key: string]: string } = {};
-    inventory.forEach((inv, index) => {
-      if (!inv.quantity.trim()) {
-        newErrors[`inventory_qty_${index}`] = 'Quantity is required';
-      } else if (isNaN(parseInt(inv.quantity)) || parseInt(inv.quantity) < 0) {
-        newErrors[`inventory_qty_${index}`] = 'Invalid quantity';
-      }
-    });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const addVariant = () => {
     const newSKU = generateSKU();
@@ -155,29 +132,6 @@ export default function AddProductScreen() {
     }
   };
 
-  const addInventory = () => {
-    setInventory([
-      ...inventory,
-      { variantIndex: 0, location: '', quantity: '', tempId: Date.now().toString() }
-    ]);
-  };
-
-  const removeInventory = (tempId: string) => {
-    setInventory(inventory.filter(i => i.tempId !== tempId));
-  };
-
-  const updateInventory = (tempId: string, field: keyof InventoryItem, value: string | number) => {
-    setInventory(inventory.map(i =>
-      i.tempId === tempId ? { ...i, [field]: value } : i
-    ));
-    // Clear error when user starts typing
-    const index = inventory.findIndex(i => i.tempId === tempId);
-    if (errors[`inventory_${field}_${index}`]) {
-      const newErrors = { ...errors };
-      delete newErrors[`inventory_${field}_${index}`];
-      setErrors(newErrors);
-    }
-  };
 
   const handleSubmit = async () => {
     // Validate all tabs
@@ -192,13 +146,6 @@ export default function AddProductScreen() {
     if (!variantsValid) {
       setActiveTab('variants');
       Alert.alert('Validation Error', 'Please fix errors in variants');
-      return;
-    }
-
-    const inventoryValid = validateInventory();
-    if (!inventoryValid) {
-      setActiveTab('inventory');
-      Alert.alert('Validation Error', 'Please fix errors in inventory');
       return;
     }
 
@@ -217,15 +164,9 @@ export default function AddProductScreen() {
         name: name.trim(),
         brand: brand.trim() || undefined,
         category_id: categoryId || undefined,
-        variants: variantsWithSKU.map((variant, index) => ({
+        variants: variantsWithSKU.map((variant) => ({
           sku: variant.sku,
           price: parseFloat(variant.price),
-          inventory: inventory
-            .filter(inv => inv.variantIndex === index)
-            .map(inv => ({
-              location: inv.location.trim() || 'Default Location',
-              quantity: parseInt(inv.quantity),
-            })),
         })),
       };
 
@@ -356,66 +297,6 @@ export default function AddProductScreen() {
     </View>
   );
 
-  const renderInventoryTab = () => (
-    <View style={styles.tabContent}>
-      <Card style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Inventory Locations</Text>
-          <TouchableOpacity onPress={addInventory} style={styles.addButton}>
-            <Text style={styles.addButtonText}>+ Add Location</Text>
-          </TouchableOpacity>
-        </View>
-        {inventory.map((inv, index) => (
-          <View key={inv.tempId} style={styles.variantItem}>
-            <View style={styles.variantHeader}>
-              <Text style={styles.variantLabel}>Location {index + 1}</Text>
-              {inventory.length > 1 && (
-                <TouchableOpacity onPress={() => removeInventory(inv.tempId)}>
-                  <Text style={styles.removeText}>Remove</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={styles.pickerContainer}>
-              <Text style={styles.label}>Variant *</Text>
-              <View style={styles.pickerWrapper}>
-                {variants.map((variant, vIndex) => (
-                  <TouchableOpacity
-                    key={variant.tempId}
-                    style={[
-                      styles.pickerOption,
-                      inv.variantIndex === vIndex && styles.pickerOptionSelected
-                    ]}
-                    onPress={() => updateInventory(inv.tempId, 'variantIndex', vIndex)}
-                  >
-                    <Text style={[
-                      styles.pickerOptionText,
-                      inv.variantIndex === vIndex && styles.pickerOptionTextSelected
-                    ]}>
-                      {variant.sku || `Variant ${vIndex + 1}`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            <Input
-              label="Location Name"
-              value={inv.location}
-              onChangeText={(text) => updateInventory(inv.tempId, 'location', text)}
-              placeholder="Default Location"
-            />
-            <Input
-              label="Quantity *"
-              value={inv.quantity}
-              onChangeText={(text) => updateInventory(inv.tempId, 'quantity', text)}
-              placeholder="0"
-              keyboardType="number-pad"
-              error={errors[`inventory_qty_${index}`]}
-            />
-          </View>
-        ))}
-      </Card>
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView
@@ -447,20 +328,11 @@ export default function AddProductScreen() {
             Variants
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'inventory' && styles.activeTab]}
-          onPress={() => setActiveTab('inventory')}
-        >
-          <Text style={[styles.tabText, activeTab === 'inventory' && styles.activeTabText]}>
-            Inventory
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView}>
         {activeTab === 'details' && renderDetailsTab()}
         {activeTab === 'variants' && renderVariantsTab()}
-        {activeTab === 'inventory' && renderInventoryTab()}
       </ScrollView>
 
       <View style={styles.footer}>

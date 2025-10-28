@@ -8,6 +8,12 @@ import { getAllCategories, getCategoryById } from '@/lib/constants';
 // Size and Color options for variants
 const SIZE_OPTIONS = [
   { value: '', label: 'Sélectionner la taille' },
+  { value: 'XS', label: 'XS' },
+  { value: 'S', label: 'S' },
+  { value: 'M', label: 'M' },
+  { value: 'L', label: 'L' },
+  { value: 'XL', label: 'XL' },
+  { value: 'XXL', label: 'XXL' },
   { value: '34', label: '34' },
   { value: '36', label: '36' },
   { value: '38', label: '38' },
