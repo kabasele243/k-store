@@ -5,6 +5,40 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getAllCategories, getCategoryById } from '@/lib/constants';
 
+// Size and Color options for variants
+const SIZE_OPTIONS = [
+  { value: '', label: 'Sélectionner la taille' },
+  { value: '34', label: '34' },
+  { value: '36', label: '36' },
+  { value: '38', label: '38' },
+  { value: '40', label: '40' },
+  { value: '42', label: '42' },
+  { value: '44', label: '44' },
+  { value: '46', label: '46' },
+  { value: '48', label: '48' },
+  { value: '50', label: '50' },
+  { value: '52', label: '52' },
+];
+
+const COLOR_OPTIONS = [
+  { value: '', label: 'Sélectionner la couleur' },
+  { value: 'Noir', label: 'Noir' },
+  { value: 'Blanc', label: 'Blanc' },
+  { value: 'Rouge', label: 'Rouge' },
+  { value: 'Bleu', label: 'Bleu' },
+  { value: 'Vert', label: 'Vert' },
+  { value: 'Jaune', label: 'Jaune' },
+  { value: 'Rose', label: 'Rose' },
+  { value: 'Violet', label: 'Violet' },
+  { value: 'Orange', label: 'Orange' },
+  { value: 'Marron', label: 'Marron' },
+  { value: 'Gris', label: 'Gris' },
+  { value: 'Marine', label: 'Marine' },
+  { value: 'Beige', label: 'Beige' },
+  { value: 'Bordeaux', label: 'Bordeaux' },
+  { value: 'Turquoise', label: 'Turquoise' },
+];
+
 interface Sale {
   id: string;
   sold_at: string;
@@ -33,6 +67,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -40,6 +75,7 @@ export default function ProductsPage() {
     category_ids: [] as string[],
     variants: [
       {
+        id: undefined as string | undefined,
         sku: '',
         price: '',
         attributes: { size: '', color: '' },
@@ -81,55 +117,130 @@ export default function ProductsPage() {
     setLoading(true);
 
     try {
-      // Create product with category_ids as JSONB array
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert({
-          name: formData.name,
-          description: formData.description || null,
-          brand: formData.brand || null,
-          category_ids: formData.category_ids,
-        })
-        .select()
-        .single();
+      if (editingProduct) {
+        // Update existing product
+        const { error: productError } = await supabase
+          .from('products')
+          .update({
+            name: formData.name,
+            description: formData.description || null,
+            brand: formData.brand || null,
+            category_ids: formData.category_ids,
+          })
+          .eq('id', editingProduct.id);
 
-      if (productError) throw productError;
+        if (productError) throw productError;
 
-      // Create variants
-      for (const variant of formData.variants) {
-        const { error: variantError } = await supabase
-          .from('variants')
+        // Handle variants
+        for (const variant of formData.variants) {
+          if (variant.id) {
+            // Update existing variant
+            const { error: variantError } = await supabase
+              .from('variants')
+              .update({
+                sku: variant.sku,
+                price: parseFloat(variant.price),
+                attributes: variant.attributes,
+              })
+              .eq('id', variant.id);
+
+            if (variantError) throw variantError;
+          } else {
+            // Create new variant
+            const { error: variantError } = await supabase
+              .from('variants')
+              .insert({
+                product_id: editingProduct.id,
+                sku: variant.sku,
+                price: parseFloat(variant.price),
+                attributes: variant.attributes,
+              });
+
+            if (variantError) throw variantError;
+          }
+        }
+
+        alert('Product updated successfully');
+      } else {
+        // Create product with category_ids as JSONB array
+        const { data: product, error: productError } = await supabase
+          .from('products')
           .insert({
-            product_id: product.id,
-            sku: variant.sku,
-            price: parseFloat(variant.price),
-            attributes: variant.attributes,
-          });
+            name: formData.name,
+            description: formData.description || null,
+            brand: formData.brand || null,
+            category_ids: formData.category_ids,
+          })
+          .select()
+          .single();
 
-        if (variantError) throw variantError;
+        if (productError) throw productError;
+
+        // Create variants
+        for (const variant of formData.variants) {
+          const { error: variantError } = await supabase
+            .from('variants')
+            .insert({
+              product_id: product.id,
+              sku: variant.sku,
+              price: parseFloat(variant.price),
+              attributes: variant.attributes,
+            });
+
+          if (variantError) throw variantError;
+        }
+
+        alert('Product created successfully');
       }
 
-      alert('Product created successfully');
-      setShowCreateForm(false);
-      setFormData({
-        name: '',
-        description: '',
-        brand: '',
-        category_ids: [],
-        variants: [
-          {
-            sku: '',
-            price: '',
-            attributes: { size: '', color: '' },
-          },
-        ],
-      });
+      cancelEdit();
       fetchProducts();
     } catch (error: any) {
-      alert(`Error creating product: ${error.message}`);
+      alert(`Error ${editingProduct ? 'updating' : 'creating'} product: ${error.message}`);
     } finally {
       setLoading(false);
     }
+  }
+
+  function startEdit(product: Product) {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || '',
+      brand: product.brand || '',
+      category_ids: product.category_ids || [],
+      variants: product.variants?.map(v => ({
+        id: v.id,
+        sku: v.sku,
+        price: v.price.toString(),
+        attributes: v.attributes || { size: '', color: '' },
+      })) || [{
+        id: undefined,
+        sku: '',
+        price: '',
+        attributes: { size: '', color: '' },
+      }],
+    });
+    setShowCreateForm(true);
+  }
+
+  function cancelEdit() {
+    setEditingProduct(null);
+    setShowCreateForm(false);
+    setFormData({
+      name: '',
+      description: '',
+      brand: '',
+      category_ids: [],
+      variants: [
+        {
+          id: undefined,
+          sku: '',
+          price: '',
+          attributes: { size: '', color: '' },
+        },
+      ],
+    });
   }
 
   function addVariant() {
@@ -138,6 +249,7 @@ export default function ProductsPage() {
       variants: [
         ...formData.variants,
         {
+          id: undefined,
           sku: '',
           price: '',
           attributes: { size: '', color: '' },
@@ -155,6 +267,14 @@ export default function ProductsPage() {
     const newVariants = [...formData.variants];
     if (field === 'size' || field === 'color') {
       newVariants[index].attributes[field] = value;
+      // Auto-generate SKU when size or color changes
+      const variant = newVariants[index];
+      if (formData.name && variant.attributes.size && variant.attributes.color) {
+        const namePart = formData.name.replace(/\s+/g, '-').toUpperCase();
+        const sizePart = variant.attributes.size;
+        const colorPart = variant.attributes.color.toUpperCase();
+        newVariants[index].sku = `${namePart}-${sizePart}-${colorPart}`;
+      }
     } else {
       (newVariants[index] as any)[field] = value;
     }
@@ -195,7 +315,7 @@ export default function ProductsPage() {
             <h1 className="text-4xl font-bold text-gray-900">Products</h1>
           </div>
           <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
+            onClick={() => showCreateForm ? cancelEdit() : setShowCreateForm(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             {showCreateForm ? 'Cancel' : 'Create Product'}
@@ -204,7 +324,9 @@ export default function ProductsPage() {
 
         {showCreateForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Create New Product</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              {editingProduct ? 'Edit Product' : 'Create New Product'}
+            </h2>
             <form onSubmit={handleCreateProduct} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -215,7 +337,19 @@ export default function ProductsPage() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      const updatedVariants = formData.variants.map(variant => {
+                        if (newName && variant.attributes.size && variant.attributes.color) {
+                          const namePart = newName.replace(/\s+/g, '-').toUpperCase();
+                          const sizePart = variant.attributes.size;
+                          const colorPart = variant.attributes.color.toUpperCase();
+                          return { ...variant, sku: `${namePart}-${sizePart}-${colorPart}` };
+                        }
+                        return variant;
+                      });
+                      setFormData({ ...formData, name: newName, variants: updatedVariants });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -300,14 +434,14 @@ export default function ProductsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          SKU *
+                          SKU (auto-généré)
                         </label>
                         <input
                           type="text"
                           required
                           value={variant.sku}
-                          onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                          readOnly
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600 cursor-not-allowed"
                         />
                       </div>
 
@@ -327,26 +461,36 @@ export default function ProductsPage() {
 
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Size
+                          Taille
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={variant.attributes.size}
                           onChange={(e) => updateVariant(index, 'size', e.target.value)}
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        >
+                          {SIZE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Color
+                          Couleur
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={variant.attributes.color}
                           onChange={(e) => updateVariant(index, 'color', e.target.value)}
                           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        >
+                          {COLOR_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -358,7 +502,7 @@ export default function ProductsPage() {
                 disabled={loading}
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {loading ? 'Creating...' : 'Create Product'}
+                {loading ? (editingProduct ? 'Updating...' : 'Creating...') : (editingProduct ? 'Update Product' : 'Create Product')}
               </button>
             </form>
           </div>
@@ -419,9 +563,17 @@ export default function ProductsPage() {
                 </div>
               )}
 
-              <p className="text-xs text-gray-400 mt-4">
-                Created: {new Date(product.created_at).toLocaleDateString()}
-              </p>
+              <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                <p className="text-xs text-gray-400">
+                  Created: {new Date(product.created_at).toLocaleDateString()}
+                </p>
+                <button
+                  onClick={() => startEdit(product)}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
           ))}
         </div>
