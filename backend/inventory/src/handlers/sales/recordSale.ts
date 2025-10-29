@@ -4,17 +4,16 @@ import {
   createSuccessResponse,
   ApiError,
 } from '../../libs/errorHandler';
-import { InventoryService } from '../../services/inventoryService';
-import { SupabaseInventoryRepository } from '../../infrastructure/supabase/SupabaseInventoryRepository';
+import { SalesService } from '../../services/salesService';
+import { SupabaseSalesRepository } from '../../infrastructure/supabase/SupabaseSalesRepository';
 import { getSupabaseClient } from '../../libs/supabaseClient';
 
 const supabase = getSupabaseClient();
-const inventoryRepository = new SupabaseInventoryRepository(supabase);
-const inventoryService = new InventoryService(inventoryRepository);
+const salesRepository = new SupabaseSalesRepository(supabase);
+const salesService = new SalesService(salesRepository);
 
-interface RecordSalesRequest {
+interface RecordSaleRequest {
   variant_id: string;
-  quantity: number;
 }
 
 export const handler = async (
@@ -25,8 +24,8 @@ export const handler = async (
       throw new ApiError(400, 'Request body is required');
     }
 
-    const requestBody: RecordSalesRequest = JSON.parse(event.body);
-    const result = await inventoryService.recordSales(requestBody);
+    const requestBody: RecordSaleRequest = JSON.parse(event.body);
+    const result = await salesService.recordSale(requestBody);
     return createSuccessResponse(result);
   } catch (error) {
     return handleError(error);

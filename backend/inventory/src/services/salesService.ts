@@ -1,5 +1,5 @@
 import { ApiError } from '../libs/errorHandler';
-import { IInventoryRepository } from '../repositories/IInventoryRepository';
+import { ISalesRepository } from '../repositories/ISalesRepository';
 
 interface RecordSalesRequest {
   variant_id: string;
@@ -10,8 +10,8 @@ interface RecordSaleRequest {
   variant_id: string;
 }
 
-export class InventoryService {
-  constructor(private readonly inventoryRepository: IInventoryRepository) {}
+export class SalesService {
+  constructor(private readonly salesRepository: ISalesRepository) {}
 
   async recordSales(request: RecordSalesRequest) {
     if (!request.variant_id) {
@@ -21,12 +21,12 @@ export class InventoryService {
       throw new ApiError(400, 'Quantity must be greater than 0');
     }
 
-    const exists = await this.inventoryRepository.variantExists(request.variant_id);
+    const exists = await this.salesRepository.variantExists(request.variant_id);
     if (!exists) {
       throw new ApiError(404, 'Variant not found');
     }
 
-    const sales = await this.inventoryRepository.recordSales(request.variant_id, request.quantity);
+    const sales = await this.salesRepository.recordSales(request.variant_id, request.quantity);
 
     return {
       message: `Recorded ${request.quantity} sales`,
@@ -40,12 +40,12 @@ export class InventoryService {
       throw new ApiError(400, 'Variant ID is required');
     }
 
-    const exists = await this.inventoryRepository.variantExists(request.variant_id);
+    const exists = await this.salesRepository.variantExists(request.variant_id);
     if (!exists) {
       throw new ApiError(404, 'Variant not found');
     }
 
-    const sale = await this.inventoryRepository.recordSale(request.variant_id);
+    const sale = await this.salesRepository.recordSale(request.variant_id);
 
     return {
       message: 'Sale recorded successfully',
@@ -53,8 +53,8 @@ export class InventoryService {
     };
   }
 
-  async getLowStock() {
-    const salesCounts = await this.inventoryRepository.getSalesCountPerVariant();
+  async getSalesReport() {
+    const salesCounts = await this.salesRepository.getSalesCountPerVariant();
     return {
       count: salesCounts.length,
       variants: salesCounts,

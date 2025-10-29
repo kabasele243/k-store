@@ -1,10 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
-  IInventoryRepository,
+  ISalesRepository,
   Sale,
-} from '../../repositories/IInventoryRepository';
+} from '../../repositories/ISalesRepository';
 
-export class SupabaseInventoryRepository implements IInventoryRepository {
+export class SupabaseSalesRepository implements ISalesRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async variantExists(variantId: string): Promise<boolean> {

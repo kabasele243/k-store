@@ -1,10 +1,10 @@
-import { InventoryService } from '../../src/services/inventoryService';
-import { IInventoryRepository, Sale } from '../../src/repositories/IInventoryRepository';
+import { SalesService } from '../../src/services/salesService';
+import { ISalesRepository, Sale } from '../../src/repositories/ISalesRepository';
 import { ApiError } from '../../src/libs/errorHandler';
 
-describe('InventoryService', () => {
-  let inventoryService: InventoryService;
-  let mockRepository: jest.Mocked<IInventoryRepository>;
+describe('SalesService', () => {
+  let salesService: SalesService;
+  let mockRepository: jest.Mocked<ISalesRepository>;
 
   beforeEach(() => {
     mockRepository = {
@@ -13,13 +13,13 @@ describe('InventoryService', () => {
       recordSale: jest.fn(),
       getSalesCountPerVariant: jest.fn()
     };
-    inventoryService = new InventoryService(mockRepository);
+    salesService = new SalesService(mockRepository);
   });
 
   describe('recordSales', () => {
     it('should throw 400 when variant_id is missing', async () => {
       await expect(
-        inventoryService.recordSales({ variant_id: '', quantity: 5 })
+        salesService.recordSales({ variant_id: '', quantity: 5 })
       ).rejects.toThrow(new ApiError(400, 'Variant ID is required'));
 
       expect(mockRepository.variantExists).not.toHaveBeenCalled();
@@ -28,7 +28,7 @@ describe('InventoryService', () => {
 
     it('should throw 400 when quantity is missing', async () => {
       await expect(
-        inventoryService.recordSales({ variant_id: 'v1', quantity: 0 } as any)
+        salesService.recordSales({ variant_id: 'v1', quantity: 0 } as any)
       ).rejects.toThrow(new ApiError(400, 'Quantity must be greater than 0'));
 
       expect(mockRepository.recordSales).not.toHaveBeenCalled();
@@ -36,13 +36,13 @@ describe('InventoryService', () => {
 
     it('should throw 400 when quantity is 0', async () => {
       await expect(
-        inventoryService.recordSales({ variant_id: 'v1', quantity: 0 })
+        salesService.recordSales({ variant_id: 'v1', quantity: 0 })
       ).rejects.toThrow(new ApiError(400, 'Quantity must be greater than 0'));
     });
 
     it('should throw 400 when quantity is negative', async () => {
       await expect(
-        inventoryService.recordSales({ variant_id: 'v1', quantity: -5 })
+        salesService.recordSales({ variant_id: 'v1', quantity: -5 })
       ).rejects.toThrow(new ApiError(400, 'Quantity must be greater than 0'));
     });
 
@@ -50,7 +50,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(false);
 
       await expect(
-        inventoryService.recordSales({ variant_id: 'non-existent', quantity: 5 })
+        salesService.recordSales({ variant_id: 'non-existent', quantity: 5 })
       ).rejects.toThrow(new ApiError(404, 'Variant not found'));
 
       expect(mockRepository.variantExists).toHaveBeenCalledWith('non-existent');
@@ -66,7 +66,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(true);
       mockRepository.recordSales.mockResolvedValue(mockSales);
 
-      const result = await inventoryService.recordSales({
+      const result = await salesService.recordSales({
         variant_id: 'v1',
         quantity: 3
       });
@@ -89,7 +89,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(true);
       mockRepository.recordSales.mockResolvedValue(mockSales);
 
-      const result = await inventoryService.recordSales({
+      const result = await salesService.recordSales({
         variant_id: 'v1',
         quantity: 10
       });
@@ -104,7 +104,7 @@ describe('InventoryService', () => {
   describe('recordSale', () => {
     it('should throw 400 when variant_id is missing', async () => {
       await expect(
-        inventoryService.recordSale({ variant_id: '' })
+        salesService.recordSale({ variant_id: '' })
       ).rejects.toThrow(new ApiError(400, 'Variant ID is required'));
 
       expect(mockRepository.variantExists).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(false);
 
       await expect(
-        inventoryService.recordSale({ variant_id: 'non-existent' })
+        salesService.recordSale({ variant_id: 'non-existent' })
       ).rejects.toThrow(new ApiError(404, 'Variant not found'));
 
       expect(mockRepository.variantExists).toHaveBeenCalledWith('non-existent');
@@ -131,7 +131,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(true);
       mockRepository.recordSale.mockResolvedValue(mockSale);
 
-      const result = await inventoryService.recordSale({ variant_id: 'v1' });
+      const result = await salesService.recordSale({ variant_id: 'v1' });
 
       expect(mockRepository.variantExists).toHaveBeenCalledWith('v1');
       expect(mockRepository.recordSale).toHaveBeenCalledWith('v1');
@@ -150,7 +150,7 @@ describe('InventoryService', () => {
       mockRepository.variantExists.mockResolvedValue(true);
       mockRepository.recordSale.mockResolvedValue(mockSale);
 
-      const result = await inventoryService.recordSale({ variant_id: 'variant-456' });
+      const result = await salesService.recordSale({ variant_id: 'variant-456' });
 
       expect(result.message).toBe('Sale recorded successfully');
       expect(result.sale).toEqual(mockSale);
@@ -159,7 +159,7 @@ describe('InventoryService', () => {
     });
   });
 
-  describe('getLowStock', () => {
+  describe('getSalesReport', () => {
     it('should return sales count per variant', async () => {
       const mockSalesCounts = [
         { variant_id: 'v1', sales_count: 10, variant_name: 'Variant 1' },
@@ -168,7 +168,7 @@ describe('InventoryService', () => {
       ];
       mockRepository.getSalesCountPerVariant.mockResolvedValue(mockSalesCounts);
 
-      const result = await inventoryService.getLowStock();
+      const result = await salesService.getSalesReport();
 
       expect(mockRepository.getSalesCountPerVariant).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
@@ -184,7 +184,7 @@ describe('InventoryService', () => {
       ];
       mockRepository.getSalesCountPerVariant.mockResolvedValue(mockSalesCounts);
 
-      const result = await inventoryService.getLowStock();
+      const result = await salesService.getSalesReport();
 
       expect(result.count).toBe(2);
       expect(result.variants).toHaveLength(2);
@@ -193,7 +193,7 @@ describe('InventoryService', () => {
     it('should return empty array when no sales exist', async () => {
       mockRepository.getSalesCountPerVariant.mockResolvedValue([]);
 
-      const result = await inventoryService.getLowStock();
+      const result = await salesService.getSalesReport();
 
       expect(result.count).toBe(0);
       expect(result.variants).toEqual([]);
@@ -210,7 +210,7 @@ describe('InventoryService', () => {
       ];
       mockRepository.getSalesCountPerVariant.mockResolvedValue(mockSalesCounts);
 
-      const result = await inventoryService.getLowStock();
+      const result = await salesService.getSalesReport();
 
       expect(result.variants[0]).toHaveProperty('variant_id');
       expect(result.variants[0]).toHaveProperty('sales_count');

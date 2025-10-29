@@ -95,30 +95,30 @@ functions:
           # authorizer:
           #   name: jwtAuthorizer
 
-  # Inventory Endpoints
-  addStock:
-    handler: src/handlers/inventory/addStock.handler
+  # Sales Endpoints
+  recordSales:
+    handler: src/handlers/sales/recordSales.handler
     events:
       - httpApi:
-          path: /inventory/add-stock
+          path: /sales/record
           method: POST
           # authorizer:
           #   name: jwtAuthorizer
 
-  removeStock:
-    handler: src/handlers/inventory/removeStock.handler
+  recordSale:
+    handler: src/handlers/sales/recordSale.handler
     events:
       - httpApi:
-          path: /inventory/remove-stock
+          path: /sales/record-one
           method: POST
           authorizer:
             name: jwtAuthorizer
 
-  getLowStock:
-    handler: src/handlers/inventory/getLowStock.handler
+  getSalesReport:
+    handler: src/handlers/sales/getSalesReport.handler
     events:
       - httpApi:
-          path: /inventory/low-stock
+          path: /sales/report
           method: GET
           authorizer:
             name: jwtAuthorizer

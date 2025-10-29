@@ -4,7 +4,7 @@ export interface Sale {
   created_at: string;
 }
 
-export interface IInventoryRepository {
+export interface ISalesRepository {
   /**
    * Check if variant exists
    */
