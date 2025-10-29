@@ -55,6 +55,7 @@ interface Variant {
   sku: string;
   price: number;
   attributes: Record<string, string>;
+  is_available: boolean;
   sales?: Sale[];
 }
 
@@ -85,6 +86,7 @@ export default function ProductsPage() {
         sku: '',
         price: '',
         attributes: { size: '', color: '' },
+        is_available: true,
       },
     ],
   });
@@ -147,6 +149,7 @@ export default function ProductsPage() {
                 sku: variant.sku,
                 price: parseFloat(variant.price),
                 attributes: variant.attributes,
+                is_available: variant.is_available,
               })
               .eq('id', variant.id);
 
@@ -160,6 +163,7 @@ export default function ProductsPage() {
                 sku: variant.sku,
                 price: parseFloat(variant.price),
                 attributes: variant.attributes,
+                is_available: variant.is_available,
               });
 
             if (variantError) throw variantError;
@@ -191,6 +195,7 @@ export default function ProductsPage() {
               sku: variant.sku,
               price: parseFloat(variant.price),
               attributes: variant.attributes,
+              is_available: variant.is_available,
             });
 
           if (variantError) throw variantError;
@@ -223,11 +228,13 @@ export default function ProductsPage() {
           size: (v.attributes?.size || '') as string,
           color: (v.attributes?.color || '') as string
         },
+        is_available: v.is_available ?? true,
       })) || [{
         id: undefined,
         sku: '',
         price: '',
         attributes: { size: '', color: '' },
+        is_available: true,
       }],
     });
     setShowCreateForm(true);
@@ -247,6 +254,7 @@ export default function ProductsPage() {
           sku: '',
           price: '',
           attributes: { size: '', color: '' },
+          is_available: true,
         },
       ],
     });
@@ -262,6 +270,7 @@ export default function ProductsPage() {
           sku: '',
           price: '',
           attributes: { size: '', color: '' },
+          is_available: true,
         },
       ],
     });
@@ -397,8 +406,8 @@ export default function ProductsPage() {
                     <label
                       key={cat.id}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${formData.category_ids.includes(cat.id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:bg-gray-50'
                         }`}
                     >
                       <input
@@ -501,6 +510,18 @@ export default function ProductsPage() {
                           ))}
                         </select>
                       </div>
+
+                      <div>
+                        <label className="flex items-center text-xs font-medium text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={variant.is_available}
+                            onChange={(e) => updateVariant(index, 'is_available', e.target.checked)}
+                            className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          Disponible
+                        </label>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -553,7 +574,8 @@ export default function ProductsPage() {
                     const salesCount = variant.sales?.length || 0;
 
                     return (
-                      <div key={variant.id} className="text-xs text-gray-600 mb-1">
+                      <div key={variant.id} className="text-xs text-gray-600 mb-1 flex items-center">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-2 ${variant.is_available ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         <span className="font-mono">{variant.sku}</span> - ${variant.price}
                         {variant.attributes && (
                           <span className="ml-2 text-gray-500">
@@ -565,6 +587,11 @@ export default function ProductsPage() {
                         )}
                         <span className="ml-2">
                           <span className="text-blue-600">Sales: {salesCount}</span>
+                        </span>
+                        <span className="ml-2">
+                          <span className={`${variant.is_available ? 'text-green-600' : 'text-red-600'}`}>
+                            {variant.is_available ? 'Disponible' : 'Indisponible'}
+                          </span>
                         </span>
                       </div>
                     );
