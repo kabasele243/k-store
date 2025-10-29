@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Switch,
 } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +45,28 @@ export default function ProductDetailScreen() {
       Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleVariantAvailability = async (variantId: string, currentValue: boolean) => {
+    if (!session) return;
+
+    try {
+      await apiFetch(`/variants/${variantId}`, {
+        method: 'PATCH',
+        token: session.access_token,
+        body: { isavailable: !currentValue },
+      });
+
+      // Update local state
+      setProduct((prev: any) => ({
+        ...prev,
+        variants: prev.variants.map((v: any) =>
+          v.id === variantId ? { ...v, isavailable: !currentValue } : v
+        ),
+      }));
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -98,6 +121,16 @@ export default function ProductDetailScreen() {
               {variant.price && (
                 <Text style={styles.variantPrice}>${variant.price.toFixed(2)}</Text>
               )}
+              <View style={styles.availabilityRow}>
+                <Text style={styles.availabilityLabel}>Disponible</Text>
+                <Switch
+                  value={variant.isavailable ?? false}
+                  onValueChange={() => toggleVariantAvailability(variant.id, variant.isavailable ?? false)}
+                  trackColor={{ false: Colors.border.primary, true: Colors.accent.primary }}
+                  thumbColor={Colors.background.primary}
+                  ios_backgroundColor={Colors.border.primary}
+                />
+              </View>
             </Card>
           );
         })}
@@ -279,6 +312,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
+  },
+  availabilityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.primary,
+  },
+  availabilityLabel: {
+    ...Typography.bodyPrimary,
+    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',
