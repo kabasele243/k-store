@@ -8,7 +8,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { token, ...fetchOptions } = options;
+  const { token, body, ...fetchOptions } = options;
 
   const headers: HeadersInit = {
     ...fetchOptions.headers,
@@ -18,9 +18,15 @@ export async function apiFetch<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Set Content-Type for requests with body
+  if (body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
+    body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {

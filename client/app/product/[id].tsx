@@ -53,7 +53,7 @@ export default function ProductDetailScreen() {
 
     try {
       await apiFetch(`/variants/${variantId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         token: session.access_token,
         body: { isavailable: !currentValue },
       });

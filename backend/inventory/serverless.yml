@@ -102,8 +102,8 @@ functions:
       - httpApi:
           path: /inventory/add-stock
           method: post
-          authorizer:
-            name: jwtAuthorizer
+          # authorizer:
+          #   name: jwtAuthorizer
 
   removeStock:
     handler: src/handlers/inventory/removeStock.handler
@@ -149,6 +149,16 @@ functions:
       - httpApi:
           path: /businesses/{id}
           method: get
+          # authorizer:
+          #   name: jwtAuthorizer
+
+  # Variant Endpoints
+  updateVariant:
+    handler: src/handlers/variants/updateVariant.handler
+    events:
+      - httpApi:
+          path: /variants/{variantId}
+          method: PUT
           # authorizer:
           #   name: jwtAuthorizer
 

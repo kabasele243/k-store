@@ -21,10 +21,10 @@ export const handler = async (
     }
 
     const requestBody = JSON.parse(event.body);
-    const { price, sku, attributes, inventory_id, quantity } = requestBody;
+    const { price, sku, attributes, inventory_id, quantity, isavailable } = requestBody;
 
     // At least one field must be provided
-    if (price === undefined && !sku && !attributes && (inventory_id === undefined || quantity === undefined)) {
+    if (price === undefined && !sku && !attributes && isavailable === undefined && (inventory_id === undefined || quantity === undefined)) {
       throw new ApiError(400, 'At least one field to update is required');
     }
 
@@ -35,6 +35,7 @@ export const handler = async (
     if (price !== undefined) updateData.price = price;
     if (sku) updateData.sku = sku;
     if (attributes) updateData.attributes = attributes;
+    if (isavailable !== undefined) updateData.is_available = isavailable;
 
     // Update the variant if any variant fields provided
     if (Object.keys(updateData).length > 0) {
@@ -64,13 +65,10 @@ export const handler = async (
       }
     }
 
-    // Fetch the updated variant with inventory
+    // Fetch the updated variant
     const { data: variant, error: fetchError } = await supabase
       .from('variants')
-      .select(`
-        *,
-        inventory_items (*)
-      `)
+      .select('*')
       .eq('id', variantId)
       .single();
 
