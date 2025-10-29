@@ -219,7 +219,10 @@ export default function ProductsPage() {
         id: v.id,
         sku: v.sku,
         price: v.price.toString(),
-        attributes: v.attributes || { size: '', color: '' },
+        attributes: {
+          size: (v.attributes?.size || '') as string,
+          color: (v.attributes?.color || '') as string
+        },
       })) || [{
         id: undefined,
         sku: '',

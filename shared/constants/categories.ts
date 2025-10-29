@@ -102,7 +102,8 @@ export const getAllCategories = (): CategoryConfig[] => {
 
 // Get categories for a specific business type
 export const getCategoriesByBusinessType = (businessTypeId: string): CategoryConfig[] => {
-  return CATEGORIES_BY_BUSINESS_TYPE[businessTypeId as BusinessTypeId] || [];
+  const categories = CATEGORIES_BY_BUSINESS_TYPE[businessTypeId as BusinessTypeId];
+  return categories ? [...categories] : [];
 };
 
 // Get a single category by id (searches across all business types)
