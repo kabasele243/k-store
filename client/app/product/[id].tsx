@@ -113,23 +113,39 @@ export default function ProductDetailScreen() {
     return (
       <View style={styles.tabContent}>
         {product.variants.map((variant: any, index: number) => {
+          const isAvailable = variant.is_available ?? false;
           return (
             <Card key={variant.id} style={styles.variantCard}>
-              <View style={styles.variantHeader}>
-                <Text style={styles.variantSku}>SKU: {variant.sku}</Text>
-              </View>
-              {variant.price && (
-                <Text style={styles.variantPrice}>${variant.price.toFixed(2)}</Text>
-              )}
-              <View style={styles.availabilityRow}>
-                <Text style={styles.availabilityLabel}>Disponible</Text>
-                <Switch
-                  value={variant.isavailable ?? false}
-                  onValueChange={() => toggleVariantAvailability(variant.id, variant.isavailable ?? false)}
-                  trackColor={{ false: Colors.border.primary, true: Colors.accent.primary }}
-                  thumbColor={Colors.background.primary}
-                  ios_backgroundColor={Colors.border.primary}
-                />
+              <View style={styles.variantContent}>
+                <View style={styles.variantInfo}>
+                  <View style={styles.skuContainer}>
+                    <Text style={styles.skuLabel}>SKU</Text>
+                    <Text style={styles.variantSku}>{variant.sku}</Text>
+                  </View>
+                  {variant.price && (
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.priceLabel}>Price</Text>
+                      <Text style={styles.variantPrice}>${variant.price.toFixed(2)}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.availabilityContainer}>
+                  <View style={styles.availabilityInfo}>
+                    <Text style={styles.availabilityLabel}>Disponible</Text>
+                    <View style={[styles.statusBadge, isAvailable ? styles.statusBadgeActive : styles.statusBadgeInactive]}>
+                      <Text style={[styles.statusText, isAvailable ? styles.statusTextActive : styles.statusTextInactive]}>
+                        {isAvailable ? 'Disponible' : 'Indisponible'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={isAvailable}
+                    onValueChange={() => toggleVariantAvailability(variant.id, isAvailable)}
+                    trackColor={{ false: Colors.border.primary, true: Colors.accent.primary }}
+                    thumbColor={Colors.background.primary}
+                    ios_backgroundColor={Colors.border.primary}
+                  />
+                </View>
               </View>
             </Card>
           );
@@ -295,36 +311,87 @@ const styles = StyleSheet.create({
   },
   variantCard: {
     marginBottom: Spacing.md,
-    padding: Spacing.md,
+    padding: Spacing.lg,
   },
-  variantHeader: {
+  variantContent: {
+    gap: Spacing.md,
+  },
+  variantInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
+    gap: Spacing.lg,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.primary,
+  },
+  skuContainer: {
+    flex: 1,
+  },
+  skuLabel: {
+    ...Typography.label,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
   variantSku: {
     ...Typography.bodyPrimary,
     fontWeight: '600',
+    fontSize: 16,
+  },
+  priceContainer: {
+    flex: 1,
+  },
+  priceLabel: {
+    ...Typography.label,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
   variantPrice: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: Colors.text.primary,
-    marginBottom: Spacing.sm,
+    color: Colors.accent.primary,
   },
-  availabilityRow: {
+  availabilityContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.primary,
+  },
+  availabilityInfo: {
+    flex: 1,
+    gap: Spacing.xs,
   },
   availabilityLabel: {
-    ...Typography.bodyPrimary,
-    fontWeight: '500',
+    ...Typography.label,
+    color: Colors.text.secondary,
+    textTransform: 'uppercase',
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  statusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeActive: {
+    backgroundColor: `${Colors.status.success}15`,
+  },
+  statusBadgeInactive: {
+    backgroundColor: `${Colors.status.danger}15`,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusTextActive: {
+    color: Colors.status.success,
+  },
+  statusTextInactive: {
+    color: Colors.status.danger,
   },
   emptyState: {
     alignItems: 'center',
