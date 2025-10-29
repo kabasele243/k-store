@@ -97,14 +97,11 @@ export default function UpdateProductModal({
       // Record sale
       await apiFetch(`/inventory/add-stock`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         token: session.access_token,
-        body: JSON.stringify({
+        body: {
           variant_id: selectedVariantId,
           quantity: parseInt(salesCount),
-        }),
+        },
       });
 
       Alert.alert('Success', `Recorded ${salesCount} sale(s) successfully`);

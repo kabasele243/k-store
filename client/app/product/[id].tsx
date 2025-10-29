@@ -62,7 +62,7 @@ export default function ProductDetailScreen() {
       setProduct((prev: any) => ({
         ...prev,
         variants: prev.variants.map((v: any) =>
-          v.id === variantId ? { ...v, isavailable: !currentValue } : v
+          v.id === variantId ? { ...v, is_available: !currentValue } : v
         ),
       }));
     } catch (error: any) {

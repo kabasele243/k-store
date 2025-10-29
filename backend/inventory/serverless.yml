@@ -82,7 +82,7 @@ functions:
     events:
       - httpApi:
           path: /products
-          method: get
+          method: GET
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -91,7 +91,7 @@ functions:
     events:
       - httpApi:
           path: /products/{productId}
-          method: get
+          method: GET
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -101,7 +101,7 @@ functions:
     events:
       - httpApi:
           path: /inventory/add-stock
-          method: post
+          method: POST
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -110,7 +110,7 @@ functions:
     events:
       - httpApi:
           path: /inventory/remove-stock
-          method: post
+          method: POST
           authorizer:
             name: jwtAuthorizer
 
@@ -119,7 +119,7 @@ functions:
     events:
       - httpApi:
           path: /inventory/low-stock
-          method: get
+          method: GET
           authorizer:
             name: jwtAuthorizer
 
@@ -129,7 +129,7 @@ functions:
     events:
       - httpApi:
           path: /uploads/presigned-urls
-          method: post
+          method: POST
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -139,7 +139,7 @@ functions:
     events:
       - httpApi:
           path: /businesses
-          method: get
+          method: GET
           # authorizer:
           #   name: jwtAuthorizer
 
@@ -148,7 +148,7 @@ functions:
     events:
       - httpApi:
           path: /businesses/{id}
-          method: get
+          method: GET
           # authorizer:
           #   name: jwtAuthorizer
 
